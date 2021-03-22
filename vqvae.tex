@@ -253,10 +253,9 @@ $$
 \mathbb{P}_\theta(z_q = \rme^j|Y) = \frac{\mu^{z_\rme}_{\theta}(j)\varphi_{\mu^{j}_\theta,\sigma^{j}_\theta}(Y)}{\sum_{k=1}^{K}\mu^{z_\rme}_{\theta}(k)\varphi_{\mu^{k}_\theta,\sigma^{k}_\theta}(Y)} = \omega^j_{z}\eqsp.
 $$
 Then, consider the loss function (Fisher or EM based update),
-\begin{align*}
-\mathcal{L}(\theta) = \mathbb{E}\left[\log p_{\theta}(z_q,Y)  \middle | Y\right] &= \sum_{j=1}^K  \omega^j_{z}\log p_{\theta}(\rme^j,Y)\eqsp,\\
-&=  \sum_{j=1}^K  \omega^j_{z}\left\{\log \mu^{z_\rme}_{\theta}(\rme^j) +  \log \varphi_{\mu^{\rme^j}_\theta,\sigma^{\rme^j}_\theta}(Y)\right\}\eqsp.
-\end{align*}
+$$
+\mathcal{L}(\theta) = \mathbb{E}\left[\log p_{\theta}(z_q,Y)  \middle | Y\right] = \sum_{j=1}^K  \omega^j_{z}\log p_{\theta}(\rme^j,Y)=  \sum_{j=1}^K  \omega^j_{z}\left\{\log \mu^{z_\rme}_{\theta}(\rme^j) +  \log \varphi_{\mu^{\rme^j}_\theta,\sigma^{\rme^j}_\theta}(Y)\right\}\eqsp.
+$$
 \section{Application to time series}
 \label{sec:model}
 \subsection{Model and architectures}
@@ -286,18 +285,33 @@ where the $\{\varepsilon_{k}\}_{1\leqslant k\leqslant n}$ are i.i.d. standard Ga
 \subsection{Loss function}
 The (complete) loglikelihood of the model (conditionally on $X_I$ which is dropped from the notations) is given by
 \begin{align*}
-\log p_{\theta,\rme^{1:n}}(z_q^{1:n},Y^{1:n}) = \left\|\rme^{1:n} - z_\rme^{1:n}\right\|^2 + \log \mu^{z_\rme^1}_{\theta}(z_q^1) + \sum_{k=0}^{n-1} \log  Q^{z_\rme^{k+1}}_{\theta}(z_q^k,z_q^{k+1})\\
-+ \sum_{k=1}^{n-1} \log \varphi_{\mu^{z_q^{k+1}}_\theta\!\!\!\!\!(Y^{k}),\sigma^{z_q^{k+1}}_\theta\!\!\!\!\!(Y^{k})}(Y_{k+1}) \eqsp,
+\log p_{\theta}(z_q^{1:n},Y^{1:n}) =  \log \mu^{z_\rme^1}_{\theta}(z_q^1) + \sum_{k=0}^{n-1} \log  Q^{z_\rme^{k+1}}_{\theta}(z_q^k,z_q^{k+1})
++ \sum_{k=0}^{n-1} \log \varphi_{\mu^{z_q^{k+1}}_\theta\!\!\!\!\!(Y^{k}),\sigma^{z_q^{k+1}}_\theta\!\!\!\!\!(Y^{k})}(Y_{k+1}) \eqsp,
 \end{align*}
-where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance $\sigma^2$. If we use a score-based estimation procedure, the parameter update is based on 
+where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance $\sigma^2$. The posterior distribution of $(z_q,z_q^{k+1})$ given $Y^{1:n}$ is written (see computation below)
 $$
-\nabla_{\theta,\rme^{1:n}}\log p_{\theta,\rme^{1:n}}(Y^{1:n})\eqsp.
+\mathbb{P}_\theta(z^k_q = \rme^j,z^k_q = \rme^\ell|Y^{1:n}) =  \omega^{j,\ell}_{z|k,k+1}\eqsp.
 $$
-An estimation of this gradient is given by 
-$$
-\nabla_{\theta,\rme^{1:n}} \log p_{\theta,\rme^{1:n}}(\hat z_q^{1:n},Y^{1:n})\eqsp,
-$$
-where $\hat z_q^{1:n} \sim p_{\theta,\rme^{1:n}}(z_q^{1:n}|X_I,Y^{1:n})$. Such a sample can be obtained with Baum-Welch algorithm.
+Then, consider the loss function (Fisher or EM based update),
+\begin{align*}
+\mathcal{L}(\theta) &= \mathbb{E}\left[\log p_{\theta}(z^{1:n}_q,Y^{1:n})  \middle | Y^{1:n}\right]\eqsp,\\
+& =  \sum_{j=1}^K\omega^{j}_{z|1}\log \mu^{z_\rme^1}_{\theta}(\rme^j) + \sum_{k=0}^{n-1}\sum_{j,\ell=1}^K   \omega^{j,\ell}_{z|k,k+1}\left\{ \log  Q^{z_\rme^{k+1}}_{\theta}(\rme^j,\rme^\ell) +  \log \varphi_{\mu^{\rme^\ell}_\theta (Y^{k}),\sigma^{\rme^\ell}_\theta(Y^{k})}(Y_{k+1})  \right\}\eqsp.
+\end{align*}
+
+
+%
+%If we use a score-based estimation procedure, the parameter update is based on 
+%$$
+%\nabla_{\theta}\log p_{\theta,\rme^{1:n}}(Y^{1:n})\eqsp.
+%$$
+%An estimation of this gradient is given by 
+%$$
+%\nabla_{\theta} \log p_{\theta,\rme^{1:n}}(\hat z_q^{1:n},Y^{1:n})\eqsp,
+%$$
+%where $\hat z_q^{1:n} \sim p_{\theta,\rme^{1:n}}(z_q^{1:n}|X_I,Y^{1:n})$. 
+
+\paragraph{Computation of the posterior weights}
+Such a sample can be obtained with Baum-Welch algorithm.
 First compute during the forward pass the discrete distributions $\phi_k$, where $\phi_k$ denotes the distribution of $z_q^k$ given $(X_I,Y^{1:k})$ as follows.
 \begin{enumerate}
 \item For all $1\leqslant j \leqslant K$, 
