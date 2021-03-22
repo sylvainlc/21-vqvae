@@ -232,7 +232,7 @@ z_\rme = f_\theta(X_I)\eqsp.
 $$
 
 
-\paragraph{Discrete latent states.} Consider $(\rme^1,\ldots,\rme^K)$ the K embedding vectors in $\rset^m$. From $z_\rme$ the model builds a latent state $z_q$ taking values in $\{\rme^1,\ldots,\rme^K\}$ (this set is identified with $\{1,\ldots, K\}$ in the following)  such that:
+\paragraph{Discrete latent states.} Consider $(\rme^1,\ldots,\rme^K)$ the K embedding vectors in $\rset^m$. From $z_\rme$ the model builds a latent state $z_q$ taking values in $\{\rme^1,\ldots,\rme^K\}$ (this set is identified with $\{1,\ldots, K\}$ in throughout the paper)  such that:
 $$
 \mathbb{P}_\theta(z_q= j) = \mu^{z_\rme}_{\theta}(j) \eqsp,
 $$
@@ -241,15 +241,22 @@ where, for all $z\in\rset^m$, $\{\mu^z_{\theta}(j)\}_{1\leqslant j\leqslant K}$ 
 $$
 Y = \mu^{z_q}_\theta + \sigma^{z_q}_\theta\varepsilon\eqsp,
 $$
-where the $\varepsilon$ is a standard Gaussian random variables in $\rset^m$ and $(\mu^{j},\sigma^{j}_\theta)$ are outputs of some neural network architecture to be defined  (proper neural network-based encoder  to be defined when the model is fixed).
+where the $\varepsilon$ is a standard Gaussian random variables in $\rset^m$ and for all $z\in\rset^m$, $(\mu^{z},\sigma^{z}_\theta)$ are outputs of some neural network architecture to be defined  (proper neural network-based encoder  to be defined when the model is fixed).
 
 \subsection{Loss function}
 The (complete) loglikelihood of the model (conditionally on $X_I$ which is dropped from the notations) is given by
 $$
-\log p_{\theta,\rme}(z_q,Y) =  \log \mu^{z_\rme}_{\theta}(z_q) +  \sum_{k=1}^{n-1} \log \varphi_{\mu^{z_q}_\theta,\sigma^{z_q}_\theta}(Y) \eqsp,
+\log p_{\theta}(z_q,Y) =  \log \mu^{z_\rme}_{\theta}(z_q) +  \log \varphi_{\mu^{z_q}_\theta,\sigma^{z_q}_\theta}(Y) \eqsp,
 $$
-where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance $\sigma^2$. 
-
+where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance $\sigma^2$. The posterior distribution of $z_q$ given $Y$ is 
+$$
+\mathbb{P}_\theta(z_q = \rme^j|Y) = \frac{\mu^{z_\rme}_{\theta}(j)\varphi_{\mu^{j}_\theta,\sigma^{j}_\theta}(Y)}{\sum_{k=1}^{K}\mu^{z_\rme}_{\theta}(k)\varphi_{\mu^{k}_\theta,\sigma^{k}_\theta}(Y)} = \omega^j_{z}\eqsp.
+$$
+Then, consider the loss function (Fisher or EM based update),
+\begin{align*}
+\mathcal{L}(\theta) = \mathbb{E}\left[\log p_{\theta}(z_q,Y)  \middle | Y\right] &= \sum_{j=1}^K  \omega^j_{z}\log p_{\theta}(\rme^j,Y)\eqsp,\\
+&=  \sum_{j=1}^K  \omega^j_{z}\left\{\log \mu^{z_\rme}_{\theta}(\rme^j) +  \log \varphi_{\mu^{\rme^j}_\theta,\sigma^{\rme^j}_\theta}(Y)\right\}\eqsp.
+\end{align*}
 \section{Application to time series}
 \label{sec:model}
 \subsection{Model and architectures}
