@@ -320,17 +320,17 @@ $$
 $$
 \item For all $1\leqslant j \leqslant K$ and  $1\leqslant k \leqslant n$,
 $$
-\phi_{k+1}(j) \propto \sum_{\ell=1}^K \phi_{k}(\ell)  Q^{z_\rme^{k+1}}_{\theta}(\ell,j) \varphi_{\mu^{z_q^{k+1}}_\theta\!\!\!\!\!(Y^{k}),\sigma^{z_q^{k+1}}_\theta\!\!\!\!\!(Y^{k})}(Y_{k+1})\eqsp.
+\phi_{k+1}(j) \propto \sum_{\ell=1}^K \phi_{k}(\ell)  Q^{z_\rme^{k+1}}_{\theta}(\ell,j) \varphi_{\mu^{j}_\theta (Y^{k}),\sigma^{j}_\theta(Y^{k})}(Y_{k+1})\eqsp.
 $$
 \end{enumerate}
-Then, to sample $\hat z_q^{1:n} \sim p_{\theta,\rme^{1:n}}(z_q^{1:n}|X_I,Y^{1:n})$, the Baum-Welch proceeds recursively backward as follows.
-\begin{enumerate}
-\item Sample $\hat z_q^{n} \sim \phi_{n}$.
-\item For all  $1\leqslant k \leqslant n-1$, sample $\hat z_q^{k}$ in $\{1,\ldots,K\}$ with probabilities given by:
-$$
-\phi_{k|n}(j)  \propto \phi_{k}(j)  Q^{z_\rme^{k+1}}_{\theta}(j,\hat z_q^{k+1}) \varphi_{\mu^{\hat z_q^{k+1}}_\theta\!\!\!\!\!(Y^{k}),\sigma^{\hat z_q^{k+1}}_\theta\!\!\!\!\!(Y^{k})}(Y_{k+1}) \propto \phi_{k}(j)  Q^{z_\rme^{k+1}}_{\theta}(j,\hat z_q^{k+1})\eqsp.
-$$
-\end{enumerate}
+%Then, to sample $\hat z_q^{1:n} \sim p_{\theta,\rme^{1:n}}(z_q^{1:n}|X_I,Y^{1:n})$, the Baum-Welch proceeds recursively backward as follows.
+%\begin{enumerate}
+%\item Sample $\hat z_q^{n} \sim \phi_{n}$.
+%\item For all  $1\leqslant k \leqslant n-1$, sample $\hat z_q^{k}$ in $\{1,\ldots,K\}$ with probabilities given by:
+%$$
+%\phi_{k|n}(j)  \propto \phi_{k}(j)  Q^{z_\rme^{k+1}}_{\theta}(j,\hat z_q^{k+1}) \varphi_{\mu^{\hat z_q^{k+1}}_\theta\!\!\!\!\!(Y^{k}),\sigma^{\hat z_q^{k+1}}_\theta\!\!\!\!\!(Y^{k})}(Y_{k+1}) \propto \phi_{k}(j)  Q^{z_\rme^{k+1}}_{\theta}(j,\hat z_q^{k+1})\eqsp.
+%$$
+%\end{enumerate}
 
 \subsection{Training algorithm}
 %\bibliographystyle{apalike}
