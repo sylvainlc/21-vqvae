@@ -221,9 +221,36 @@
 \section{Introduction}
 \label{sec:intro}
 
+\section{Mixture-based vq-vae}
+\label{sec:model:mixture}
+\subsection{Model and architectures}
+Let $X_I \in \rset^d$ be the input data and $Y$ be the observations in $\rset^q$.  Several frameworks.
+
+\paragraph{Encoder.} Consider an encoding function $f_\theta: \rset^d \to \rset^{m}$ (proper neural network-based encoder  to be defined when the model is fixed) and write
+$$
+z_\rme = f_\theta(X_I)\eqsp.
+$$
 
 
-\section{Model}
+\paragraph{Discrete latent states.} Consider $(\rme^1,\ldots,\rme^K)$ the K embedding vectors in $\rset^m$. From $z_\rme$ the model builds a latent state $z_q$ taking values in $\{\rme^1,\ldots,\rme^K\}$ (this set is identified with $\{1,\ldots, K\}$ in the following)  such that:
+$$
+\mathbb{P}_\theta(z_q= j) = \mu^{z_\rme}_{\theta}(j) \eqsp,
+$$
+where, for all $z\in\rset^m$, $\{\mu^z_{\theta}(j)\}_{1\leqslant j\leqslant K}$ is a probability vector on $\{1,\ldots, K\}$.
+\paragraph{Decoder.} The conditional law of the observation $Y$ given $\mathcal{F}$ (proper $\sigma$-field to be defined when the model is fixed) is written
+$$
+Y = \mu^{z_q}_\theta + \sigma^{z_q}_\theta\varepsilon\eqsp,
+$$
+where the $\varepsilon$ is a standard Gaussian random variables in $\rset^m$ and $(\mu^{j},\sigma^{j}_\theta)$ are outputs of some neural network architecture to be defined  (proper neural network-based encoder  to be defined when the model is fixed).
+
+\subsection{Loss function}
+The (complete) loglikelihood of the model (conditionally on $X_I$ which is dropped from the notations) is given by
+$$
+\log p_{\theta,\rme}(z_q,Y) =  \log \mu^{z_\rme}_{\theta}(z_q) +  \sum_{k=1}^{n-1} \log \varphi_{\mu^{z_q}_\theta,\sigma^{z_q}_\theta}(Y) \eqsp,
+$$
+where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance $\sigma^2$. 
+
+\section{Application to time series}
 \label{sec:model}
 \subsection{Model and architectures}
 Let $X_I \in \rset^d$ be the input data and $(Y^1,\ldots,Y^n)$ be the observations in $\rset^q$.  Several frameworks.
