@@ -234,23 +234,23 @@ $$
 
 \paragraph{Discrete latent states.} Consider $(\rme^1,\ldots,\rme^K)$ the K embedding vectors in $\rset^m$. From $z_\rme$ the model builds a latent state $z_q$ taking values in $\{\rme^1,\ldots,\rme^K\}$ (this set is identified with $\{1,\ldots, K\}$ in throughout the paper)  such that:
 $$
-\mathbb{P}_\theta(z_q= j) = \mu^{z_\rme}_{\theta}(j) \eqsp,
+\mathbb{P}_\theta(z_q= j) = \rho^{z_\rme}_{\theta}(j) \eqsp,
 $$
-where, for all $z\in\rset^m$, $\{\mu^z_{\theta}(j)\}_{1\leqslant j\leqslant K}$ is a probability vector on $\{1,\ldots, K\}$.
+where, for all $z\in\rset^m$, $\{\rho^z_{\theta}(j)\}_{1\leqslant j\leqslant K}$ is a probability vector on $\{1,\ldots, K\}$.
 \paragraph{Decoder.} The conditional law of the observation $Y$ given $\mathcal{F}$ (proper $\sigma$-field to be defined when the model is fixed) is written
 $$
 Y = \mu^{z_q}_\theta + \sigma^{z_q}_\theta\varepsilon\eqsp,
 $$
-where the $\varepsilon$ is a standard Gaussian random variables in $\rset^m$ and for all $z\in\rset^m$, $(\mu^{z},\sigma^{z}_\theta)$ are outputs of some neural network architecture to be defined  (proper neural network-based encoder  to be defined when the model is fixed).
+where the $\varepsilon$ is a standard Gaussian random variables in $\rset^q$ and for all $z\in\rset^m$, $(\mu_\theta^{z},\sigma^{z}_\theta)$ are outputs of some neural network architecture to be defined  (proper neural network-based encoder  to be defined when the model is fixed).
 
 \subsection{Loss function}
 The (complete) loglikelihood of the model (conditionally on $X_I$ which is dropped from the notations) is given by
 $$
-\log p_{\theta}(z_q,Y) =  \log \mu^{z_\rme}_{\theta}(z_q) +  \log \varphi_{\mu^{z_q}_\theta,\sigma^{z_q}_\theta}(Y) \eqsp,
+\log p_{\theta}(z_q,Y) =  \log \rho^{z_\rme}_{\theta}(z_q) +  \log \varphi_{\mu^{z_q}_\theta,\sigma^{z_q}_\theta}(Y) \eqsp,
 $$
 where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance $\sigma^2$. The posterior distribution of $z_q$ given $Y$ is 
 $$
-\mathbb{P}_\theta(z_q = \rme^j|Y) = \frac{\mu^{z_\rme}_{\theta}(j)\varphi_{\mu^{j}_\theta,\sigma^{j}_\theta}(Y)}{\sum_{k=1}^{K}\mu^{z_\rme}_{\theta}(k)\varphi_{\mu^{k}_\theta,\sigma^{k}_\theta}(Y)} = \omega^j_{z}\eqsp.
+\mathbb{P}_\theta(z_q = \rme^j|Y) = \frac{\rho^{z_\rme}_{\theta}(j)\varphi_{\mu^{j}_\theta,\sigma^{j}_\theta}(Y)}{\sum_{k=1}^{K}\rho^{z_\rme}_{\theta}(k)\varphi_{\mu^{k}_\theta,\sigma^{k}_\theta}(Y)} = \omega^j_{z}\eqsp.
 $$
 Then, consider the loss function (Fisher or EM based update),
 $$
