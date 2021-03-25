@@ -254,7 +254,7 @@ $$
 $$
 Then, consider the loss function (Fisher or EM based update),
 $$
-\mathcal{L}(\theta) = \mathbb{E}\left[\log p_{\theta}(z_q,Y)  \middle | Y\right] = \sum_{j=1}^K  \omega^j_{z}\log p_{\theta}(\rme^j,Y)=  \sum_{j=1}^K  \omega^j_{z}\left\{\log \mu^{z_\rme}_{\theta}(\rme^j) +  \log \varphi_{\mu^{\rme^j}_\theta,\sigma^{\rme^j}_\theta}(Y)\right\}\eqsp.
+\mathcal{L}(\theta) = \mathbb{E}\left[\log p_{\theta}(z_q,Y)  \middle | Y\right] = \sum_{j=1}^K  \omega^j_{z}\log p_{\theta}(\rme^j,Y)=  \sum_{j=1}^K  \omega^j_{z}\left\{\log \rho^{z_\rme}_{\theta}(\rme^j) +  \log \varphi_{\mu^{\rme^j}_\theta,\sigma^{\rme^j}_\theta}(Y)\right\}\eqsp.
 $$
 \section{Application to time series}
 \label{sec:model}
