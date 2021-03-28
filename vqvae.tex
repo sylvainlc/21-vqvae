@@ -232,30 +232,32 @@ z_\rme = f_\theta(X_I)\eqsp.
 $$
 
 
-\paragraph{Discrete latent states.} Consider $(\rme^1,\ldots,\rme^K)$ the K embedding vectors in $\rset^m$. From $z_\rme$ the model builds a latent state $z_q$ taking values in $\{\rme^1,\ldots,\rme^K\}$ (this set is identified with $\{1,\ldots, K\}$ in throughout the paper)  such that:
+\paragraph{Discrete latent states.} Consider $(\rme^1,\ldots,\rme^K)$ the K embedding vectors in $\rset^m$. From $z_\rme$ the model builds a latent state $z_q$ taking values in $\{\rme^1,\ldots,\rme^K\}$ such that:%(this set is identified with $\{1,\ldots, K\}$ in throughout the paper)  
 $$
-\mathbb{P}_\theta(z_q= j) = \rho^{z_\rme}_{\theta}(j) \eqsp,
+\mathbb{P}_\theta(z_q= \rme^j) = \rho^{}_{\theta}(z_\rme;\rme^j) \eqsp,
 $$
-where, for all $z\in\rset^m$, $\{\rho^z_{\theta}(j)\}_{1\leqslant j\leqslant K}$ is a probability vector on $\{1,\ldots, K\}$.
+where, for all $z\in\rset^m$, $\{\rho_{\theta}(z;\rme^j)\}_{1\leqslant j\leqslant K}$ is a probability vector on  $\{\rme^1,\ldots,\rme^K\}$.
 \paragraph{Decoder.} The conditional law of the observation $Y$ given $\mathcal{F}$ (proper $\sigma$-field to be defined when the model is fixed) is written
 $$
-Y = \mu^{z_q}_\theta + \sigma^{z_q}_\theta\varepsilon\eqsp,
+Y = \mu_\theta(z_q) + \sigma_\theta(z_q)\varepsilon\eqsp,
 $$
-where the $\varepsilon$ is a standard Gaussian random variables in $\rset^q$ and for all $z\in\rset^m$, $(\mu_\theta^{z},\sigma^{z}_\theta)$ are outputs of some neural network architecture to be defined  (proper neural network-based encoder  to be defined when the model is fixed).
+where the $\varepsilon$ is a standard Gaussian random variables in $\rset^q$ and for all $z\in\rset^m$, $\{\mu_\theta(z),\sigma_\theta(z)\}$ are outputs of some neural network architecture to be defined  (proper neural network-based encoder  to be defined when the model is fixed).
 
 \subsection{Loss function}
 The (complete) loglikelihood of the model (conditionally on $X_I$ which is dropped from the notations) is given by
 $$
-\log p_{\theta}(z_q,Y) =  \log \rho^{z_\rme}_{\theta}(z_q) +  \log \varphi_{\mu^{z_q}_\theta,\sigma^{z_q}_\theta}(Y) \eqsp,
+\log p_{\theta}(z_q,Y) =  \log \rho^{}_{\theta}(z_\rme;z_q) +  \log \varphi_{\mu^{}_\theta (z_q),\sigma^{}_\theta (z_q)}(Y) \eqsp,
 $$
 where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance $\sigma^2$. The posterior distribution of $z_q$ given $Y$ is 
 $$
-\mathbb{P}_\theta(z_q = \rme^j|Y) = \frac{\rho^{z_\rme}_{\theta}(j)\varphi_{\mu^{j}_\theta,\sigma^{j}_\theta}(Y)}{\sum_{k=1}^{K}\rho^{z_\rme}_{\theta}(k)\varphi_{\mu^{k}_\theta,\sigma^{k}_\theta}(Y)} = \omega^j_{z}\eqsp.
+\mathbb{P}_\theta(z_q = \rme^j|Y) = \frac{\rho^{}_{\theta}(z_\rme;\rme^j)\varphi_{\mu_\theta(\rme^j),\sigma^{}_\theta(\rme^j)}(Y)}{\sum_{k=1}^{K}\rho^{}_{\theta}(z_\rme;\rme^k)\varphi_{\mu_\theta(\rme^k),\sigma_\theta(\rme^k)}(Y)} = \omega^j_{z}\eqsp.
 $$
 Then, consider the loss function (Fisher or EM based update),
 $$
-\mathcal{L}(\theta) = \mathbb{E}\left[\log p_{\theta}(z_q,Y)  \middle | Y\right] = \sum_{j=1}^K  \omega^j_{z}\log p_{\theta}(\rme^j,Y)=  \sum_{j=1}^K  \omega^j_{z}\left\{\log \rho^{z_\rme}_{\theta}(\rme^j) +  \log \varphi_{\mu^{\rme^j}_\theta,\sigma^{\rme^j}_\theta}(Y)\right\}\eqsp.
+\mathcal{L}(\theta) = \mathbb{E}\left[\log p_{\theta}(z_q,Y)  \middle | Y\right] = \sum_{j=1}^K  \omega^j_{z}\log p_{\theta}(\rme^j,Y)=  \sum_{j=1}^K  \omega^j_{z}\left\{\log \rho^{}_{\theta}(z_\rme;\rme^j) +  \log \varphi_{\mu^{}_\theta(\rme^j),\sigma^{}_\theta(\rme^j)}(Y)\right\}\eqsp.
 $$
+An alternative is to compute the estimate $\mathbb{E}_\theta[z_q|Y] = \sum_{j=1}^K  \omega^j_{z}\rme^j$.
+
 \section{Application to time series}
 \label{sec:model}
 \subsection{Model and architectures}
