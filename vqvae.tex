@@ -2,7 +2,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
-\usepackage{authblk}
+\usepackage{authblk,url}
 \usepackage{amssymb,amsmath,amsthm,twoopt,xargs,mathtools}
 \usepackage{times,dsfont,ifthen}
 \usepackage{fancyhdr,xcolor}
@@ -218,6 +218,49 @@
 \end{abstract}
 
 
+\subsection*{Experiments} 
+List of experiments \& datasets to validate the new approach and compare to vq-vae \url{https://docs.google.com/document/d/1a7lhplsBraTD3qmvsHXdoPmQj00YijT2XMWpHEFeb58/edit}
+
+\subsection*{Draft for the new approach}
+ Let $(Y^1,\ldots,Y^n)$ be the observations in $\rset^q$ (a sequence of structured data, not necessarily some time series).
+\paragraph{Encoder.} Consider an encoding function $f_\theta$ (proper neural network-based encoder  to be defined when the model is fixed) and write
+$$
+(z_\rme^1,\ldots, z_\rme^m) = f_\theta(Y^{1:n})\eqsp.
+$$
+Note that the function $f_\theta$ does not build as many encoding states $(z_\rme^1,\ldots, z_\rme^m)$ as the number of observations. 
+\paragraph{Discrete latent states.} The crucial step to estimate the parameter is to compute 
+$$
+\nabla_\theta\mathcal{L}(\theta) = \nabla_\theta \mathbb{E}_{\hat{\theta}_p}\left[\log p_{\theta}(z^{1:m}_q,Y^{1:n})  \middle | Y^{1:n}\right]\eqsp,
+$$
+i.e. to compute an expectation under the distribution of the sequence $z^{1:m}_q$ given the observations $Y^{1:n}$. Following the original vq-vae, we then propose a model for the conditional distribution of the sequence $z^{1:m}_q$ given $Y^{1:n}$ (and not for the prior distribution of the discrete states). Consider $(\rme^1,\ldots,\rme^K)$ the K embedding vectors. Let $Y^{-k}$ be observations in a neighborhood of $Y^k$. From $(z_\rme^1,\ldots, z_\rme^m)$ and the observations, the model builds a Markov chain (we may consider more comple dependencies) $(z_q^1,\ldots, z_q^n)$ taking values in $\{\rme^1,\ldots,\rme^K\}$ such that:
+$$
+\mathbb{P}_\theta(z_q^1 = \rme^j|Y^{1:n}) = \mu_\theta[z_\rme^1,Y^{-1}](\rme^j) \eqsp,\quad \mathbb{P}_\theta(z_q^{k+1} = \rme^j | z_q^{k} =  \rme^\ell,Y^{1:n}) = Q_{\theta}[z_\rme^{k},z_\rme^{k+1},Y^{-k}](\rme^\ell,\rme^j)\eqsp, 
+$$
+where, for all $z,z'$, $\{\mu_{\theta}[z,Y^{-1}](\rme^j)\}_{1\leqslant j\leqslant K}$ is a probability vector and $\{Q_{\theta}[z,z',Y^{-k}](\rme^\ell,\rme^j)\}_{1\leqslant j,\ell\leqslant K}$ is a transition matrix on $\{\rme^1,\ldots, \rme^K\}$.  
+\paragraph{Decoder.} The conditional law of the observation $Y_{k}$ given $\mathcal{F}_k$ (proper $\sigma$-field to be defined when the model is fixed, a neihnorhood of observations and latent states) is written
+$$
+Y^{k} = \mu^{z_q^{k}}_\theta(Y^{-k}) + \sigma^{z_q^{k}}_\theta(Y^{-k})\varepsilon_{k}\eqsp,
+$$
+where the $\{\varepsilon_{k}\}_{1\leqslant k\leqslant n}$ are i.i.d. standard Gaussian random variables in $\rset^q$ and $(\mu^{j},\sigma^{j}_\theta)$ are outputs of some neural network architecture to be defined  (proper neural network-based encoder  to be defined when the model is fixed).
+\paragraph{Training.}
+The gradient step is given by 
+\begin{multline*}
+\nabla_\theta\mathcal{L}(\theta) = \nabla_\theta \mathbb{E}_{\hat{\theta}_p}\left[\log p_{\theta}(z^{1:m}_q,Y^{1:n})  \middle | Y^{1:n}\right] \\
+=  \nabla_\theta \mathbb{E}_{\hat{\theta}_p}\left[\log p_{\theta}(z^{1:m}_q)  \middle | Y^{1:n}\right]  + \nabla_\theta \mathbb{E}_{\hat{\theta}_p}\left[\log p_{\theta}(Y^{1:n}|z^{1:m}_q)  \middle | Y^{1:n}\right]\eqsp.
+\end{multline*}
+The second term is easy to compute (depending on the complexity of $ p_{\theta}(Y^{1:n}|z^{1:m}_q)$ but we may start with something easy) as the computational expecation is computed with the conditional kernel. The second term is trickier, it is the term trained in a separate learning framework in vq-vae. We should use the explicit marginalization 
+$$
+ p_{\theta}(z^{1:m}_q) \sim \int p_{\theta}(z^{1:m}_q|y^{1:n})p_*(\rmd y^{1:n})
+$$
+and provide a Monte Carlo estimate based on samples from $p_\star$, i.e. samples from the dataset.
+
+
+
+\clearpage
+\newpage
+\textcolor{red}{The notes below are not useful anymore... for now!}
+
+
 \section{Introduction}
 \label{sec:intro}
 
@@ -260,6 +303,16 @@ An alternative is to compute the estimate $\mathbb{E}_\theta[z_q|Y] = \sum_{j=1}
 
 \section{Application to time series}
 \label{sec:model}
+Following the previous section, the crucial step to estimate the parameter is to compute 
+$$
+\mathcal{L}(\theta) = \mathbb{E}\left[\log p_{\theta}(z^{1:n}_q,Y^{1:n})  \middle | Y^{1:n}\right]\eqsp,
+$$
+i.e. to compute an expectation under the distribution of the sequence $z^{1:n}_q$ given the observations $Y^{1:n}$.
+
+In the case where $z^{1:n}_q$ is a Markov chain, we know that conditionally on $Y^{1:n}$, $z^{1:n}_q$ is a Markov chain which revolves backwards in time. Instead of computing the backward Markov kernel from the prior kernel of $z^{1:n}_q$ (see the computations below) we propose to directly model the backward Markov kernel. 
+
+For all $z\in\rset^m$, $y^{1:n}$, let $\{\mu^{z,y^{\underline\kappa(n):n}}_{\theta}(j)\}_{1\leqslant j\leqslant K}$ be a probability vector and $Q_k^{z,y^{\underline\kappa(k):\overline\kappa(k)}}$ be a transition matrix on $\{\rme^1,\ldots, \rme^K\}$. For each $k$,$\{\underline\kappa(k)\ldots,\overline\kappa(k)\}$ is the time frame around $k$ selecting the observations used as an input for  $Q_k^{z,y^{\underline\kappa(k):\overline\kappa(k)}}$.
+
 \subsection{Model and architectures}
 Let $X_I \in \rset^d$ be the input data and $(Y^1,\ldots,Y^n)$ be the observations in $\rset^q$.  Several frameworks.
 \begin{enumerate}
