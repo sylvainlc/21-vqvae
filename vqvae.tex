@@ -228,6 +228,37 @@ $$
 (z_\rme^1,\ldots, z_\rme^m) = f_\theta(Y^{1:n})\eqsp.
 $$
 Note that the function $f_\theta$ does not build as many encoding states $(z_\rme^1,\ldots, z_\rme^m)$ as the number of observations. 
+In the initial approach \textcolor{red}{we keep the exact same $f_{\theta}$ and therefore the same $(z_\rme^1,\ldots, z_\rme^m)$ than in the original vq-vae.}
+We propose then to introduce a variational family to model the conditional distribution of $(z_q^1,\ldots, z_q^m)$ given $(Y^1,\ldots,Y^n)$.
+$$
+q_\varphi (z_q^{1:m} |Y^{1:n}) = q_\varphi(z_q^{1}|Y^{1:n})\prod_{k=1}^m q_\varphi(z_q^{k+1}|z_q^{k},Y^{1:n}) \eqsp,
+$$
+where the initial distriubtion and the transition kernel depend on $(z_\rme^1,\ldots, z_\rme^m)$.
+
+\paragraph{Decoder.} For the initial approach we use the same decoder as in the original vq-vae $p_{\theta}(Y^{1:n}|z_q^{1:m})$.
+
+\paragraph{ELBO 1.}
+The loss function is of the form
+$$
+\mathcal{L}(\theta,\varphi) = \mathbb{E}_{q_\phi}\left[\log\frac{p_\theta(z_q^{1:m},Y^{1:n})}{q_\varphi(z_q^{1:m}|Y^{1:n})}\right]
+$$
+Here, samples from $\mathcal{L}(\theta,\varphi)$ are obtained easily (VAE or IWAE style). In the first approach we want to see the impact of the choice of $q_\phi$ so that $p_\theta(z_q^{1:m})$ is chosen as the uniform distribution.
+We can then compare the original vq-vae with this version.
+
+\paragraph{ELBO 2.}
+We can also propose a model for $p_\theta(z_q^{1:m})$. 
+\begin{enumerate}
+\item We can use a complex fully-parameterized model $p_\theta(z_q^{1:m})$. 
+\item Or we can use another mini-bacth of observations to sample many $z_q^{1:m}\sim \frac{1}{M}\sum_{i=1}^M q_\varphi(\cdot | Y^{1:n})$. 
+\end{enumerate}
+$$
+\mathcal{L}(\theta,\varphi) = \mathbb{E}_{q_\phi}\left[\log\frac{p_\theta(z_q^{1:m},Y^{1:n})}{q_\varphi(z_q^{1:m}|Y^{1:n})}\right]
+$$
+Here, samples from $\mathcal{L}(\theta,\varphi)$ are obtained easily (VAE or IWAE style). 
+
+\clearpage
+\newpage
+
 \paragraph{Discrete latent states.} The crucial step to estimate the parameter is to compute 
 $$
 \nabla_\theta\mathcal{L}(\theta) = \nabla_\theta \mathbb{E}_{\hat{\theta}_p}\left[\log p_{\theta}(z^{1:m}_q,Y^{1:n})  \middle | Y^{1:n}\right]\eqsp,
@@ -241,7 +272,7 @@ where, for all $z,z'$, $\{\mu_{\theta}[z,Y^{-1}](\rme^j)\}_{1\leqslant j\leqslan
 $$
 Y^{k} = \mu^{z_q^{k}}_\theta(Y^{-k}) + \sigma^{z_q^{k}}_\theta(Y^{-k})\varepsilon_{k}\eqsp,
 $$
-where the $\{\varepsilon_{k}\}_{1\leqslant k\leqslant n}$ are i.i.d. standard Gaussian random variables in $\rset^q$ and $(\mu^{j},\sigma^{j}_\theta)$ are outputs of some neural network architecture to be defined  (proper neural network-based encoder  to be defined when the model is fixed).
+where the $\{\varepsilon_{k}\}_{1\leqslant k\leqslant n}$ are i.i.d. standard Gaussian random variables in $\rset^q$ and $(\mu^{j},\sigma^{j}_\theta)$ are outputs of some neural network architecture to be defined  (proper neural network-based encoder  to be defined when the model is fixed). \textcolor{red}{The observation model for $Y^k$ may depend on more latent state than $z_q^k$.}
 \paragraph{Training.}
 The gradient step is given by 
 \begin{multline*}
