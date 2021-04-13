@@ -4,7 +4,7 @@
 \usepackage[english]{babel}
 \usepackage{authblk,url}
 \usepackage{amssymb,amsmath,amsthm,twoopt,xargs,mathtools}
-\usepackage{times,dsfont,ifthen}
+\usepackage{times,ifthen}
 \usepackage{fancyhdr,xcolor}
 
 \title{}
@@ -57,20 +57,20 @@
 	{\tstatletter_{#2}}
 	{\widehat{\tau}_{#2}^{#1}}
 }
-\newcommand{\af}[1]{h_{#1}} 
+\newcommand{\af}[1]{h_{#1}}
 \newcommand{\deriv}{\nabla_{\parvec}}
 
 \newcommand{\kernel}[1]{\mathbf{#1}}
 \newcommand{\bmf}[1]{\set{F}(#1)}
 \newcommand{\set}[1]{\mathsf{#1}}
 
-\newcommandx{\bk}[2][1=]{ 
+\newcommandx{\bk}[2][1=]{
 \ifthenelse{\equal{#1}{}}
 {\overleftarrow{\kernel{Q}}_{#2}}
 {\overleftarrow{\kernel{Q}}_{#2}^{#1}}
 }
 
-\newcommandx{\bkhat}[2][1=]{ 
+\newcommandx{\bkhat}[2][1=]{
 \ifthenelse{\equal{#1}{}}
 {\widehat{\kernel{Q}}_{#2}}
 {\widehat{\kernel{Q}}_{#2}^{#1}}
@@ -78,8 +78,8 @@
 
 \newcommand{\lk}{\kernel{L}}
 \newcommand{\idop}{\operatorname{id}}
-\newcommand{\hd}[1]{q_{#1}} 
-\newcommand{\hdhat}[1]{\widehat{q}_{#1}} 
+\newcommand{\hd}[1]{q_{#1}}
+\newcommand{\hdhat}[1]{\widehat{q}_{#1}}
 
 
 \newcommand{\addf}[1]{\termletter_{#1}}
@@ -218,7 +218,7 @@
 \end{abstract}
 
 
-\subsection*{Experiments} 
+\subsection*{Experiments}
 List of experiments \& datasets to validate the new approach and compare to vq-vae \url{https://docs.google.com/document/d/1a7lhplsBraTD3qmvsHXdoPmQj00YijT2XMWpHEFeb58/edit}
 
 \subsection*{Draft for the new approach}
@@ -227,7 +227,7 @@ List of experiments \& datasets to validate the new approach and compare to vq-v
 $$
 (z_\rme^1,\ldots, z_\rme^m) = f_\theta(Y^{1:n})\eqsp.
 $$
-Note that the function $f_\theta$ does not build as many encoding states $(z_\rme^1,\ldots, z_\rme^m)$ as the number of observations. 
+Note that the function $f_\theta$ does not build as many encoding states $(z_\rme^1,\ldots, z_\rme^m)$ as the number of observations.
 In the initial approach \textcolor{red}{we keep the exact same $f_{\theta}$ and therefore the same $(z_\rme^1,\ldots, z_\rme^m)$ than in the original vq-vae.}
 We propose then to introduce a variational family to model the conditional distribution of $(z_q^1,\ldots, z_q^m)$ given $(Y^1,\ldots,Y^n)$.
 $$
@@ -246,40 +246,71 @@ Here, samples from $\mathcal{L}(\theta,\varphi)$ are obtained easily (VAE or IWA
 We can then compare the original vq-vae with this version.
 
 \paragraph{ELBO 2.}
-We can also propose a model for $p_\theta(z_q^{1:m})$. 
+We can also propose a model for $p_\theta(z_q^{1:m})$.
 \begin{enumerate}
-\item We can use a complex fully-parameterized model $p_\theta(z_q^{1:m})$. 
-\item Or we can use another mini-bacth of observations to sample many $z_q^{1:m}\sim \frac{1}{M}\sum_{i=1}^M q_\varphi(\cdot | Y^{1:n})$. 
+\item We can use a complex fully-parameterized model $p_\theta(z_q^{1:m})$.
+\item Or we can use another mini-bacth of observations to sample many $z_q^{1:m}\sim \frac{1}{M}\sum_{i=1}^M q_\varphi(\cdot | Y^{1:n})$.
 \end{enumerate}
 $$
 \mathcal{L}(\theta,\varphi) = \mathbb{E}_{q_\phi}\left[\log\frac{p_\theta(z_q^{1:m},Y^{1:n})}{q_\varphi(z_q^{1:m}|Y^{1:n})}\right]
 $$
-Here, samples from $\mathcal{L}(\theta,\varphi)$ are obtained easily (VAE or IWAE style). 
+Here, samples from $\mathcal{L}(\theta,\varphi)$ are obtained easily (VAE or IWAE style).
+
+\paragraph{Implementation considerations}
+(draft) We consider the case described in ELBO 1. From a batch of observations $Y$ compute the $z_e^{1:m} = f_{\theta}(Y^{1:n})$, where $f_{\theta}$ is a typical encoder. The following options can be explored to compute the $z_q^{1:m}$ from the $e_j$ and $z_e^{1:m}$.
+\begin{enumerate}
+\item (vqvae: all independant, no model) $z_q^{i} = e_j$ where $j = argmin_j ||z_e^i - e_j||^2$.
+\item (mixture vqvae: all independant) $q_\varphi(z_q^{i}|z_e^{i})$ is a mixture of the code vectors $e_j$ (see below).
+\item (adding a Markov structure) $q_\varphi(z_q^{1}|z_e^{1})$ is a mixture of the code vectors $e_j$, then $q_\varphi(z_q^{k+1}|z_q^{k},z_e^{k+1})$ is described below.
+\item (full parametrized model (ELBO 2.)): $q_\varphi(z_q^{1:m}|z_e^{1:m}, e_j)$: unclear how to do it, and probably complex to learn efficiently. A possibility using the original VQ-VAE pixelCNN, i.e. an autoregressive model is described below
+\item (iterative model (ELBO 2.)): Would it be possible to build an iterative estimate of $z_q^{1:m}$ by first considering them independant, then using a parametrized model to refine them depeding on their local dependency (like a diffusion model https://arxiv.org/abs/2006.11239)
+\end{enumerate}
+
+Mixture for a single element (2):
+$$w_j^{i} = ||e_j - z_e^{i}||$$
+$$q_\varphi(z_q^{i}|z_e^{i}) = q^\star_\varphi(z_q^{i}|z_e^{i}) = softmax(\frac{\mathbf{w}^{i}}{\tau})$$
+
+
+Mixture with markov structure (3):
+$$q_\varphi(z_q^{1}|z_e^{1}) = q^\star_\varphi(z_q^{1}|z_e^{1})$$
+$$Q_{\theta} = g_{\theta}(Y^{1:n})$$
+$$q_\varphi(z_q^{k+1}|z_q^{k},z_e^{k+1}) = (q^\star_\varphi(z_q^{i}|z_e^{i}))^\alpha \times (Q_{\theta} \cdot z_q^{k})^{(1 - \alpha)}$$
+where $g_{\theta}$ has shared parameters with the encoder (typically a second encoder head), and $Q_{\theta}$ is a transition matrix of size $K \times K$ (parametrization to be defined, take inspiration from attention models). $\alpha$ could be parametrized as well, depending on whether we matched well $z_e^i$ to a codebook vector $e_j$ (i.e. depeding on the  $min_j||e_j - z_e^{i}||$)
+
+Mixture with an autoregressive model (4) $g_{\theta}$ is typically a RNN, PixelCNN, WaveNet:
+$$q_\varphi(z_q^{1}|z_e^{1}) = q^\star_\varphi(z_q^{1}|z_e^{1})$$
+$$q_\varphi(z_q^{k+1}|z_q^{1:k},z_e^{k+1}) = O(g_{\theta}(z_q^{1:k}), q^\star_\varphi(z_q^{k+1}|z_e^{k+1}))$$
+
+Where $O$ is a mixing function, enabling to select whether we should take the input from the autoregressive model or from the input (could be similar to previous).
+
+
+Finally, regardless of the model, we can get the $z_q^{i}$ vector as such
+$$ z_q^{i} = \sum_j^m q_\varphi(z_q^{i}|\cdot)_j e_j$$
 
 \clearpage
 \newpage
 
-\paragraph{Discrete latent states.} The crucial step to estimate the parameter is to compute 
+\paragraph{Discrete latent states.} The crucial step to estimate the parameter is to compute
 $$
 \nabla_\theta\mathcal{L}(\theta) = \nabla_\theta \mathbb{E}_{\hat{\theta}_p}\left[\log p_{\theta}(z^{1:m}_q,Y^{1:n})  \middle | Y^{1:n}\right]\eqsp,
 $$
 i.e. to compute an expectation under the distribution of the sequence $z^{1:m}_q$ given the observations $Y^{1:n}$. Following the original vq-vae, we then propose a model for the conditional distribution of the sequence $z^{1:m}_q$ given $Y^{1:n}$ (and not for the prior distribution of the discrete states). Consider $(\rme^1,\ldots,\rme^K)$ the K embedding vectors. Let $Y^{-k}$ be observations in a neighborhood of $Y^k$. From $(z_\rme^1,\ldots, z_\rme^m)$ and the observations, the model builds a Markov chain (we may consider more comple dependencies) $(z_q^1,\ldots, z_q^n)$ taking values in $\{\rme^1,\ldots,\rme^K\}$ such that:
 $$
-\mathbb{P}_\theta(z_q^1 = \rme^j|Y^{1:n}) = \mu_\theta[z_\rme^1,Y^{-1}](\rme^j) \eqsp,\quad \mathbb{P}_\theta(z_q^{k+1} = \rme^j | z_q^{k} =  \rme^\ell,Y^{1:n}) = Q_{\theta}[z_\rme^{k},z_\rme^{k+1},Y^{-k}](\rme^\ell,\rme^j)\eqsp, 
+\mathbb{P}_\theta(z_q^1 = \rme^j|Y^{1:n}) = \mu_\theta[z_\rme^1,Y^{-1}](\rme^j) \eqsp,\quad \mathbb{P}_\theta(z_q^{k+1} = \rme^j | z_q^{k} =  \rme^\ell,Y^{1:n}) = Q_{\theta}[z_\rme^{k},z_\rme^{k+1},Y^{-k}](\rme^\ell,\rme^j)\eqsp,
 $$
-where, for all $z,z'$, $\{\mu_{\theta}[z,Y^{-1}](\rme^j)\}_{1\leqslant j\leqslant K}$ is a probability vector and $\{Q_{\theta}[z,z',Y^{-k}](\rme^\ell,\rme^j)\}_{1\leqslant j,\ell\leqslant K}$ is a transition matrix on $\{\rme^1,\ldots, \rme^K\}$.  
+where, for all $z,z'$, $\{\mu_{\theta}[z,Y^{-1}](\rme^j)\}_{1\leqslant j\leqslant K}$ is a probability vector and $\{Q_{\theta}[z,z',Y^{-k}](\rme^\ell,\rme^j)\}_{1\leqslant j,\ell\leqslant K}$ is a transition matrix on $\{\rme^1,\ldots, \rme^K\}$.
 \paragraph{Decoder.} The conditional law of the observation $Y_{k}$ given $\mathcal{F}_k$ (proper $\sigma$-field to be defined when the model is fixed, a neihnorhood of observations and latent states) is written
 $$
 Y^{k} = \mu^{z_q^{k}}_\theta(Y^{-k}) + \sigma^{z_q^{k}}_\theta(Y^{-k})\varepsilon_{k}\eqsp,
 $$
 where the $\{\varepsilon_{k}\}_{1\leqslant k\leqslant n}$ are i.i.d. standard Gaussian random variables in $\rset^q$ and $(\mu^{j},\sigma^{j}_\theta)$ are outputs of some neural network architecture to be defined  (proper neural network-based encoder  to be defined when the model is fixed). \textcolor{red}{The observation model for $Y^k$ may depend on more latent state than $z_q^k$.}
 \paragraph{Training.}
-The gradient step is given by 
+The gradient step is given by
 \begin{multline*}
 \nabla_\theta\mathcal{L}(\theta) = \nabla_\theta \mathbb{E}_{\hat{\theta}_p}\left[\log p_{\theta}(z^{1:m}_q,Y^{1:n})  \middle | Y^{1:n}\right] \\
 =  \nabla_\theta \mathbb{E}_{\hat{\theta}_p}\left[\log p_{\theta}(z^{1:m}_q)  \middle | Y^{1:n}\right]  + \nabla_\theta \mathbb{E}_{\hat{\theta}_p}\left[\log p_{\theta}(Y^{1:n}|z^{1:m}_q)  \middle | Y^{1:n}\right]\eqsp.
 \end{multline*}
-The second term is easy to compute (depending on the complexity of $ p_{\theta}(Y^{1:n}|z^{1:m}_q)$ but we may start with something easy) as the computational expecation is computed with the conditional kernel. The second term is trickier, it is the term trained in a separate learning framework in vq-vae. We should use the explicit marginalization 
+The second term is easy to compute (depending on the complexity of $ p_{\theta}(Y^{1:n}|z^{1:m}_q)$ but we may start with something easy) as the computational expecation is computed with the conditional kernel. The second term is trickier, it is the term trained in a separate learning framework in vq-vae. We should use the explicit marginalization
 $$
  p_{\theta}(z^{1:m}_q) \sim \int p_{\theta}(z^{1:m}_q|y^{1:n})p_*(\rmd y^{1:n})
 $$
@@ -306,7 +337,7 @@ z_\rme = f_\theta(X_I)\eqsp.
 $$
 
 
-\paragraph{Discrete latent states.} Consider $(\rme^1,\ldots,\rme^K)$ the K embedding vectors in $\rset^m$. From $z_\rme$ the model builds a latent state $z_q$ taking values in $\{\rme^1,\ldots,\rme^K\}$ such that:%(this set is identified with $\{1,\ldots, K\}$ in throughout the paper)  
+\paragraph{Discrete latent states.} Consider $(\rme^1,\ldots,\rme^K)$ the K embedding vectors in $\rset^m$. From $z_\rme$ the model builds a latent state $z_q$ taking values in $\{\rme^1,\ldots,\rme^K\}$ such that:%(this set is identified with $\{1,\ldots, K\}$ in throughout the paper)
 $$
 \mathbb{P}_\theta(z_q= \rme^j) = \rho^{}_{\theta}(z_\rme;\rme^j) \eqsp,
 $$
@@ -322,7 +353,7 @@ The (complete) loglikelihood of the model (conditionally on $X_I$ which is dropp
 $$
 \log p_{\theta}(z_q,Y) =  \log \rho^{}_{\theta}(z_\rme;z_q) +  \log \varphi_{\mu^{}_\theta (z_q),\sigma^{}_\theta (z_q)}(Y) \eqsp,
 $$
-where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance $\sigma^2$. The posterior distribution of $z_q$ given $Y$ is 
+where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance $\sigma^2$. The posterior distribution of $z_q$ given $Y$ is
 $$
 \mathbb{P}_\theta(z_q = \rme^j|Y) = \frac{\rho^{}_{\theta}(z_\rme;\rme^j)\varphi_{\mu_\theta(\rme^j),\sigma^{}_\theta(\rme^j)}(Y)}{\sum_{k=1}^{K}\rho^{}_{\theta}(z_\rme;\rme^k)\varphi_{\mu_\theta(\rme^k),\sigma_\theta(\rme^k)}(Y)} = \omega^j_{z}\eqsp.
 $$
@@ -334,13 +365,13 @@ An alternative is to compute the estimate $\mathbb{E}_\theta[z_q|Y] = \sum_{j=1}
 
 \section{Application to time series}
 \label{sec:model}
-Following the previous section, the crucial step to estimate the parameter is to compute 
+Following the previous section, the crucial step to estimate the parameter is to compute
 $$
 \mathcal{L}(\theta) = \mathbb{E}\left[\log p_{\theta}(z^{1:n}_q,Y^{1:n})  \middle | Y^{1:n}\right]\eqsp,
 $$
 i.e. to compute an expectation under the distribution of the sequence $z^{1:n}_q$ given the observations $Y^{1:n}$.
 
-In the case where $z^{1:n}_q$ is a Markov chain, we know that conditionally on $Y^{1:n}$, $z^{1:n}_q$ is a Markov chain which revolves backwards in time. Instead of computing the backward Markov kernel from the prior kernel of $z^{1:n}_q$ (see the computations below) we propose to directly model the backward Markov kernel. 
+In the case where $z^{1:n}_q$ is a Markov chain, we know that conditionally on $Y^{1:n}$, $z^{1:n}_q$ is a Markov chain which revolves backwards in time. Instead of computing the backward Markov kernel from the prior kernel of $z^{1:n}_q$ (see the computations below) we propose to directly model the backward Markov kernel.
 
 For all $z\in\rset^m$, $y^{1:n}$, let $\{\mu^{z,y^{\underline\kappa(n):n}}_{\theta}(j)\}_{1\leqslant j\leqslant K}$ be a probability vector and $Q_k^{z,y^{\underline\kappa(k):\overline\kappa(k)}}$ be a transition matrix on $\{\rme^1,\ldots, \rme^K\}$. For each $k$,$\{\underline\kappa(k)\ldots,\overline\kappa(k)\}$ is the time frame around $k$ selecting the observations used as an input for  $Q_k^{z,y^{\underline\kappa(k):\overline\kappa(k)}}$.
 
@@ -348,18 +379,18 @@ For all $z\in\rset^m$, $y^{1:n}$, let $\{\mu^{z,y^{\underline\kappa(n):n}}_{\the
 Let $X_I \in \rset^d$ be the input data and $(Y^1,\ldots,Y^n)$ be the observations in $\rset^q$.  Several frameworks.
 \begin{enumerate}
 \item $X_I$ contains weather forecasts and building management settings for the next 3 days. The observations $(Y^1,\ldots,Y^n)$  are the temperatures/energy consumptions to predict.
-\item Visual language modeling. 
+\item Visual language modeling.
 \end{enumerate}
 
 \paragraph{Encoder.} Consider an encoding function $f_\theta: \rset^d \to \rset^{m\times n}$ (proper neural network-based encoder  to be defined when the model is fixed) and write
 $$
 (z_\rme^1,\ldots, z_\rme^n) = f_\theta(X_I)\eqsp.
 $$
-The function $f_\theta$ builds as many encoding states $(z_\rme^1,\ldots, z_\rme^n)$ as the number of observations. 
+The function $f_\theta$ builds as many encoding states $(z_\rme^1,\ldots, z_\rme^n)$ as the number of observations.
 
 \paragraph{Discrete latent states.} Consider $(\rme^1,\ldots,\rme^K)$ the K embedding vectors in $\rset^m$. From $(z_\rme^1,\ldots, z_\rme^n)$ the model builds a Markov chain $(z_q^1,\ldots, z_q^n)$ taking values in $\{\rme^1,\ldots,\rme^K\}$ (this set is identified with $\{1,\ldots, K\}$ in the following)  such that:
 $$
-\mathbb{P}_\theta(z_q^1 = j) = \mu^{z_\rme^1}_{\theta}(j) \eqsp,\quad \mathbb{P}_\theta(z_q^{k+1} = j | z_q^{k} =  \ell) = Q^{z_\rme^{k+1}}_{\theta}(\ell,j)\eqsp, 
+\mathbb{P}_\theta(z_q^1 = j) = \mu^{z_\rme^1}_{\theta}(j) \eqsp,\quad \mathbb{P}_\theta(z_q^{k+1} = j | z_q^{k} =  \ell) = Q^{z_\rme^{k+1}}_{\theta}(\ell,j)\eqsp,
 $$
 where, for all $z\in\rset^m$, $\{\mu^z_{\theta}(j)\}_{1\leqslant j\leqslant K}$ is a probability vector and $\{Q^{z}_{\theta}(\ell,j)\}_{1\leqslant j,\ell\leqslant K}$ is a transition matrix on $\{1,\ldots, K\}$.
 \paragraph{Decoder.} The conditional law of the observation $Y_{k+1}$ given $\mathcal{F}_k$ (proper $\sigma$-field to be defined when the model is fixed) is written
@@ -387,21 +418,21 @@ where $\omega^{j}_{1,z|n} = \sum_{\ell=1}^K\omega^{j,\ell}_{z,1,2|n}$
 
 
 %
-%If we use a score-based estimation procedure, the parameter update is based on 
+%If we use a score-based estimation procedure, the parameter update is based on
 %$$
 %\nabla_{\theta}\log p_{\theta,\rme^{1:n}}(Y^{1:n})\eqsp.
 %$$
-%An estimation of this gradient is given by 
+%An estimation of this gradient is given by
 %$$
 %\nabla_{\theta} \log p_{\theta,\rme^{1:n}}(\hat z_q^{1:n},Y^{1:n})\eqsp,
 %$$
-%where $\hat z_q^{1:n} \sim p_{\theta,\rme^{1:n}}(z_q^{1:n}|X_I,Y^{1:n})$. 
+%where $\hat z_q^{1:n} \sim p_{\theta,\rme^{1:n}}(z_q^{1:n}|X_I,Y^{1:n})$.
 
 \paragraph{Computation of the posterior weights}
 Such a sample can be obtained with Baum-Welch algorithm.
 First compute during the forward pass the discrete distributions $\phi_k$, where $\phi_k$ denotes the distribution of $z_q^k$ given $(X_I,Y^{1:k})$ as follows.
 \begin{enumerate}
-\item For all $1\leqslant j \leqslant K$, 
+\item For all $1\leqslant j \leqslant K$,
 $$
 \phi_1(j) \propto \mu^{z_\rme^1}_{\theta}(j) \varphi_{\mu^{z_q^{1}}_\theta,\sigma^{z_q^{1}}_\theta}(Y_1)\eqsp.
 $$
@@ -413,7 +444,7 @@ $$
 Then, the weights $ \omega^{j,\ell}_{z|k,k+1}$ are computed recursively backward
 %Then, to sample $\hat z_q^{1:n} \sim p_{\theta,\rme^{1:n}}(z_q^{1:n}|X_I,Y^{1:n})$, the Baum-Welch proceeds recursively backward as follows.
 \begin{enumerate}
-\item For all $1\leqslant \ell,j \leqslant K$, 
+\item For all $1\leqslant \ell,j \leqslant K$,
 $$
 \omega^{j,\ell}_{z,n-1,n|n} \propto \phi_{n-1}(j)Q^{z_\rme^{n}}_{\theta}(j,\ell) \varphi_{\mu^{\ell}_\theta(Y^{n-1}),\sigma^{\ell}_\theta(Y^{n-1})}(Y_{n})\phi_{n}(\ell)   \eqsp.
 $$
