@@ -221,6 +221,42 @@
 \subsection*{Experiments}
 List of experiments \& datasets to validate the new approach and compare to vq-vae \url{https://docs.google.com/document/d/1a7lhplsBraTD3qmvsHXdoPmQj00YijT2XMWpHEFeb58/edit}
 
+\subsection*{Mixture vq-vae}
+ Let $(X^1,\ldots,X^n)$ be the observations in $\rset^q$ (a sequence of structured data, not necessarily some time series).
+\paragraph{Encoder - mixture vq-vae.} Consider an encoding function $f_\theta$ (proper neural network-based encoder  to be defined when the model is fixed) and write
+$$
+(z_\rme^1,\ldots, z_\rme^m) = f_\varphi(X^{1:n})\eqsp.
+$$
+Note that the function $f_\varphi$ does not build as many encoding states $(z_\rme^1,\ldots, z_\rme^m)$ as the number of observations.
+In the initial approach 
+\textcolor{red}{we keep the exact same $f_{\varphi}$ and therefore the same $(z_\rme^1,\ldots, z_\rme^m)$ than in the original vq-vae. This means that $\varphi$ is not estimated at first and the data representation is optimized during an other phase.}
+We propose then to introduce a variational family to model the conditional distribution of $(z_q^1,\ldots, z_q^m)$ given $(X^1,\ldots,X^n)$ and $(z_\rme^1,\ldots, z_\rme^m)$.
+$$
+q_\phi (z_q^{k} = i |X^{1:n},z_\rme^{1:m}) = \mathrm{Softmax}\left(\rme^{-\|z_\rme^{k}-\rme_i\|^2_{\Gamma}}\right) \eqsp,
+$$
+where $\|z_\rme^{k}-\rme_i\|^2_{\Gamma} = (z_\rme^{k}-\rme_i)^T\Gamma (z_\rme^{k}-\rme_i)$. This mean-field variational distribution assumes that the latent $(z_q^1,\ldots, z_q^m)$ are independent given $(X^1,\ldots,X^n)$ and $(z_\rme^1,\ldots, z_\rme^m)$. Here, the unknown parameters to estimate are 
+$$
+\phi = \left\{\rme_1,\ldots,\rme_K,\Gamma\right\}\eqsp.
+$$
+
+\paragraph{Decoder - mixture vq-vae.} 
+Following standard vq-vae, during training it is assumed that $p_\theta(z_q)$ is uniform (i.e. we do not estimate the prior during this training phase). Then, consider the following model
+$$
+p_{\theta}(z_\rme,X|z_q = i) = \varphi_{\rme^i,\Gamma}(z_\rme)p_{\theta}(X|z_\rme)\eqsp,
+$$
+where $\varphi_{\rme^i,\Gamma}$ is the Gaussian probability density function and $p_{\theta}(X|z_\rme)$ is a decoder inspired by standard vq-vae.
+
+The variational posterior can be defined as a marginal distribution, $q_\phi(z_q|x) = \int
+\bar{q}_\phi (z_q, z_\rme |x) \rmd z_\rme$, where $\bar{q}_\phi(z_q,z_\rme|x)$ has an explicit closed-form. 
+The auxiliary variables $z_\rme$ lead to the objective
+\begin{equation*}
+\int \bar{q}_\phi(z_q,z_\rme
+|x) \log \left( \frac{\bar{p}_\theta(z_q,z_\rme,x)}{\bar{q}_\phi(z_q,z_\rme|x)} \right)  \rmd z_q \rmd z_\rme \eqsp.
+\end{equation*}
+
+\clearpage
+\newpage
+
 \subsection*{Draft for the new approach}
  Let $(Y^1,\ldots,Y^n)$ be the observations in $\rset^q$ (a sequence of structured data, not necessarily some time series).
 \paragraph{Encoder.} Consider an encoding function $f_\theta$ (proper neural network-based encoder  to be defined when the model is fixed) and write
