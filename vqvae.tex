@@ -224,13 +224,13 @@ List of experiments \& datasets to validate the new approach and compare to vq-v
 
 
 \subsection*{Mixture vq-vae}
- Let $(X^1,\ldots,X^n)$ be the observations in $\rset^q$ (a sequence of structured data, not necessarily some time series). 
-\paragraph{Decoder i.e. generative model - mixture vq-vae.} 
+ Let $(X^1,\ldots,X^n)$ be the observations in $\rset^q$ (a sequence of structured data, not necessarily some time series).
+\paragraph{Decoder i.e. generative model - mixture vq-vae.}
 Following standard vq-vae, during training it is assumed that $p_\theta(z_q)$ is uniform (i.e. we do not estimate the prior during this training phase). Then, consider the following model
 $$
 p_{\theta}(X|z_q = i) = p_{\theta}(X|\vois(\rme^i)) = \varphi_{f_\theta(\vois(\rme^i)),\Gamma}(X)\eqsp,
 $$
-where $\vois(\rme^i)$ are the embeddings in a neighborhood of  $\rme^i$, $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance matrice $\Sigma$ and $f_\theta$ is a parametric function with input all the embeddings in $\vois(\rme^i)$. We may consider $\vois(\rme^i) = \{\rme^{i-1},\rme^i\}$ or $\vois(\rme^i) = \{\rme^{i-1},\rme^i,\rme^{i+1}\}$. Therefore, 
+where $\vois(\rme^i)$ are the embeddings in a neighborhood of  $\rme^i$, $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance matrice $\Sigma$ and $f_\theta$ is a parametric function with input all the embeddings in $\vois(\rme^i)$. We may consider $\vois(\rme^i) = \{\rme^{i-1},\rme^i\}$ or $\vois(\rme^i) = \{\rme^{i-1},\rme^i,\rme^{i+1}\}$. Therefore,
 $$
 p_{\theta}(X) = \frac{1}{K}\sum_{i=1}^K \varphi_{f_\theta(\vois(\rme^i)),\Gamma}(X)\eqsp.
 $$
@@ -240,23 +240,23 @@ $$
 (z_\rme^1,\ldots, z_\rme^m) = f_\varphi(X^{1:n})\eqsp.
 $$
 Note that the function $f_\varphi$ does not build as many encoding states $(z_\rme^1,\ldots, z_\rme^m)$ as the number of observations.
-In the initial approach, we keep the exact same $f_{\varphi}$ and therefore the same $(z_\rme^1,\ldots, z_\rme^m)$ than in the original vq-vae. This means that $\varphi$ is not estimated at first and the data representation is optimized during an other phase.
-We propose then to introduce a variational family to model the conditional distribution of $(z_q^1,\ldots, z_q^m)$ given $(X^1,\ldots,X^n)$ and $(z_\rme^1,\ldots, z_\rme^m)$.
-\paragraph{Option 1.} 
+The parameters $\varphi$ are estimated through gradient descent during the training.
+
+\paragraph{Quantization} Consider a codebook of $K$ vectors $e_{1:K} \in \mathbb{R}^n$, we compute $q_\varphi(z_q^{1:m}|z_e^{1:m})$ through a recurrent neural network.
+We initialize the hidden state to zero $h^0 = 0$, and compute following states recursively, $\forall 1 \leq j \leq m$
+\begin{align*}
+    h^j &= \tanh(W_z z_e^j + W_h h^j + b) \\
+    p^j &= \texttt{softmax}(- \| e_k - h^j\|^2_{1:K})
+\end{align*}
+where $W_z, W_h$ and $b$ are weight matrices and vector of the neural network.
+
+In the specific conditions where $W_z = I_n$ and $W_h = b = 0$, these equations lead to
 $$
-q_\phi (z_q^{k} = i |X^{1:n},z_\rme^{1:m}) = \mathrm{Softmax}\left(\rme^{-\|z_\rme^{k}-\rme_i\|^2_{\Omega}}\right) \eqsp,
-$$
-where $\|z_\rme^{k}-\rme_i\|^2_{\Omega} = (z_\rme^{k}-\rme_i)^T\Omega (z_\rme^{k}-\rme_i)$. This mean-field variational distribution assumes that the latent $(z_q^1,\ldots, z_q^m)$ are independent given $(X^1,\ldots,X^n)$ and $(z_\rme^1,\ldots, z_\rme^m)$. %Here, the unknown parameters to estimate are 
-%$$
-%\phi = \left\{\rme_1,\ldots,\rme_K,\Gamma\right\}\eqsp.
-%$$
-\paragraph{Option 2.}
-$$
-q_\phi (z_q^{k} = i |X^{1:n},z_\rme^{1:m}) = q_\phi\left(\vois(z_\rme^{k} )\right)_i \eqsp.
+p^j = \texttt{softmax}(- \| e_k - \textcolor{red}{\tanh(z_e^j)} \|^2_{1:K})
 $$
 %where $\|z_\rme^{k}-\rme_i\|^2_{\Omega} = (z_\rme^{k}-\rme_i)^T\Omega (z_\rme^{k}-\rme_i)$. This mean-field variational distribution assumes that the latent $(z_q^1,\ldots, z_q^m)$ are independent given $(X^1,\ldots,X^n)$ and $(z_\rme^1,\ldots, z_\rme^m)$.
 %The variational posterior can be defined as a marginal distribution, $q_\phi(z_q|x) = \int
-%\bar{q}_\phi (z_q, z_\rme |x) \rmd z_\rme$, where $\bar{q}_\phi(z_q,z_\rme|x)$ has an explicit closed-form. 
+%\bar{q}_\phi (z_q, z_\rme |x) \rmd z_\rme$, where $\bar{q}_\phi(z_q,z_\rme|x)$ has an explicit closed-form.
 %The auxiliary variables $z_\rme$ lead to the objective
 %\begin{equation*}
 %\int \bar{q}_\phi(z_q,z_\rme
