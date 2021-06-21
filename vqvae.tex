@@ -264,6 +264,19 @@ $$
 where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance matrix $\Sigma$,
 and $\vois(z_q^j)$ are the vectors in a neighborhood of  $z_q^j$. We may consider for instance $\vois(z_q^j) = \{z_q^{j-p} \cdots z_q^j\}$.
 
+\paragraph{Training}
+We minimize the loss
+$$
+\mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi} \left[ \log\left(\frac{p_\theta(x|z_q)}{q_\varphi(z_q|z_e)}\right) \right]
+$$
+If we consider $\Sigma_\theta$ to be a diagonal matrix, with values $\Sigma_\theta = \texttt{diag}(\{\sigma_{\theta, i}^2\}_{i=1}^d)$:
+\begin{align*}
+    \log p_\theta(x|z_q^j) &= \log \varphi_{\mu_\theta(\vois(z_q^j)),\Sigma_\theta(\vois(z_q^j))}(x) \\
+			   &= \log\left(|\Sigma_\theta(\vois(z_q^j))|^{-\frac{1}{2}} \exp\left(-\frac{1}{2}(x - \mu_\theta(\vois(z_q^j)))^T \Sigma_\theta(\vois(z_q^j))^{-1} (x - \mu_\theta(\vois(z_q^j))) \right)\right) \\
+			   &= -\sum_{i=1}^d \log(\sigma_{\theta, i}(\vois(z_q^j))) -\frac{1}{2} \sum_{i=1}^d \frac{(x_i - \mu_\theta(\vois(z_q^j)))^2}{\sigma_{\theta, i}^2(\vois(z_q^j))}
+\end{align*}
+where constant terms have been omitted.
+
 %where $\|z_\rme^{k}-\rme_i\|^2_{\Omega} = (z_\rme^{k}-\rme_i)^T\Omega (z_\rme^{k}-\rme_i)$. This mean-field variational distribution assumes that the latent $(z_q^1,\ldots, z_q^m)$ are independent given $(X^1,\ldots,X^n)$ and $(z_\rme^1,\ldots, z_\rme^m)$.
 %The variational posterior can be defined as a marginal distribution, $q_\phi(z_q|x) = \int
 %\bar{q}_\phi (z_q, z_\rme |x) \rmd z_\rme$, where $\bar{q}_\phi(z_q,z_\rme|x)$ has an explicit closed-form.
