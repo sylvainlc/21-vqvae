@@ -248,7 +248,7 @@ $$
 
 We sample codebook vectors from the categorical distribution based on the computed $p^j_{1:K}$:
 \begin{align*}
-p_\theta(z_q^{1:m} | z_e^{1:m}) &= \prod_{j=1}^m p_\theta(z_q^j|z_e^{1:j}) \\
+q_\varphi(z_q^{1:m} | z_e^{1:m}) &= \prod_{j=1}^m p_\theta(z_q^j|z_e^{1:j}) \\
 				&= \prod_{j=1}^m \texttt{Cat}(\{p^j_k\}_{k=1}^K)
 \end{align*}
 
