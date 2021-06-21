@@ -251,6 +251,7 @@ We sample codebook vectors from the categorical distribution based on the comput
 q_\varphi(z_q^{1:m} | z_e^{1:m}) &= \prod_{j=1}^m p_\theta(z_q^j|z_e^{1:j}) \\
 				&= \prod_{j=1}^m \texttt{Cat}(\{p^j_k\}_{k=1}^K)
 \end{align*}
+During training, we replace the categorical distribution by a Gumbel distribution, in order to define a differentiable quantization.
 
 \paragraph{Decoder i.e. generative model - mixture vq-vae.}
 Following standard vq-vae, during training it is assumed that $p_\theta(z_q)$ is uniform (i.e. we do not estimate the prior during this training phase).
