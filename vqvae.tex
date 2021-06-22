@@ -233,24 +233,20 @@ $$
 Note that the function $f_\theta$ does not build as many encoding states $(z_\rme^1,\ldots, z_\rme^m)$ as the number of observations.
 The parameters $\theta$ are estimated through gradient descent during the training.
 
-\paragraph{Quantization} Consider a codebook of $K$ vectors $\rme_{1:K} \in \mathbb{R}^d$, $d \ll D$, we compute $q_\varphi(z_q^{1:m}|z_e^{1:m})$ through a recurrent neural network.
-We initialize the hidden state to zero $h^0 = 0$, and compute following states recursively, $\forall 1 \leq j \leq m$
+\paragraph{Quantization} Consider a codebook of $K$ vectors $\rme_{1:K} \in \mathbb{R}^d$, $d \ll D$, and consider a variational family $q_\varphi(z_q^{1:m}|z_e^{1:m})$ given by a recurrent neural network. Set$h^0 = 0$, and for all $1 \leq j \leq m$ and all $1 \leq k \leq K$,
 \begin{align*}
-    h^j &= \tanh(W_z z_e^j + W_h h^j + b) \\
-    p^j_k &= \texttt{softmax}(- \| \rme_k - h^j\|^2), \quad \forall 1 \leq k \leq K
+    h^j &= \tanh(W_z z_e^j + W_h h^{j-1} + b)\,, \\
+    p^j_k &= \texttt{softmax}(- \| \rme_k - h^j\|^2)\,, 
 \end{align*}
-where $W_z, W_h$ and $b$ are weight matrices and vector of the neural network.
-
-In the specific conditions where $W_z = I_d$ and $W_h = b = 0$, these equations lead to
+where $W_z, W_h$ and $b$ are the unknownweight matrices and vector of the neural network. In the specific conditions where $W_z = I_d$ and $W_h = b = 0$, these equations lead to
 $$
-p^j_k = \texttt{softmax}(- \| \rme_k - \tanh(z_e^j) \|^2)
+p^j_k = \texttt{softmax}(- \| \rme_k - \tanh(z_e^j) \|^2)\,.
 $$
 
 We sample codebook vectors from the categorical distribution based on the computed $p^j_{1:K}$:
-\begin{align*}
-q_\varphi(z_q^{1:m} | z_e^{1:m}) &= \prod_{j=1}^m p_\theta(z_q^j|z_e^{1:j}) \\
-				&= \prod_{j=1}^m \texttt{Cat}(\{p^j_k\}_{k=1}^K)
-\end{align*}
+$$
+q_\varphi(z_q^{1:m} | z_e^{1:m}) = \prod_{j=1}^m p_\theta(z_q^j|z_e^{1:j}) = \prod_{j=1}^m \texttt{Cat}(\{p^j_k\}_{k=1}^K)\,.
+$$
 During training, we replace the categorical distribution by a Gumbel distribution, in order to define a differentiable quantization.
 
 \paragraph{Decoder i.e. generative model - mixture vq-vae.}
