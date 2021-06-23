@@ -224,37 +224,37 @@ List of experiments \& datasets to validate the new approach and compare to vq-v
 
 
 \subsection*{Mixture vq-vae}
- Let $(X^1,\ldots,X^n)$ be the observations in $\rset^D$ (a sequence of structured data, not necessarily some time series).
+ Let $(X^1,\ldots,X^n)$ be the observations in $\rset^D$ (a sequence of structured data, not necessarily some time series).  It is assumed that the distribution of $X$ depends on a hidden sequence of discrete states $(z_q^1,\ldots, z_q^n)$ taking values in $\{1,\ldots,K\}$ through  embedding vectors $(\rme^1,\ldots,\rme^K)$ in $\rset^m$. 
 
 \paragraph{Decoder i.e. generative model - mixture vq-vae.}
-Following standard vq-vae, during training it is assumed that $p_\theta(z_q)$ is uniform (i.e. we do not estimate the prior during this training phase).
-$$
-p_\theta(z_q) = \prod_{j=1}^m p(z_q^j)\eqsp,
-$$
-where $p$ is the uniform distribution on $\{1 \cdots K\}$.
+Following the standard vq-vae approach, during training it is assumed that the prior distribution of the hidden states is uniform on $\{1 \cdots K\}$. %$p_\theta(z_q)$ is uniform (i.e. we do not estimate the prior during this training phase).
+%$$
+%p_\theta(z_q) = \prod_{j=1}^m p(z_q^j)\eqsp,
+%$$
+%where $p$ is the uniform distribution on $\{1 \cdots K\}$.
 Then, consider the following model:
 $$
-p_{\theta}(X|z_q^j) = p_{\theta}(X|\vois(z_q^j)) = \varphi_{\mu_\theta(\vois(z_q^j)),\Sigma_\theta(\vois(z_q^j))}(X)\eqsp,
+p_{\theta}(X|z_q) = \prod_{j=1}^n p_{\theta}(X^j|\vois(z_q^j)) = \varphi_{\mu_\theta(\bar e^j),\Sigma_\theta(\bar e^j)}(X)\eqsp,
 $$
-where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance matrix $\Sigma$,
-and $\vois(z_q^j)$ are the vectors in a neighborhood of  $z_q^j$. We may consider for instance $\vois(z_q^j) = \{z_q^{j-p} \cdots z_q^j\}$.
+where $\vois(z_q^j)$ are the vectors in a neighborhood of  $z_q^j$, $\bar e^j = \{e^{z_q^\ell}\;;\; z_q^\ell\in \vois(z_q^j)\}$ and where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance matrix $\Sigma$. We may consider for instance $\vois(z_q^j) = \{z_q^{j-p} \cdots z_q^j\}$.
 
 \paragraph{Encoder - mixture vq-vae.} Consider an encoding function $f_\theta$ and write
 $$
-(z_\rme^1,\ldots, z_\rme^m) = f_\theta(X^{1:n})\eqsp.
+(z_\rme^1,\ldots, z_\rme^m) = f_\eta(X^{1:n})\eqsp.
 $$
-Note that the function $f_\theta$ does not build as many encoding states $(z_\rme^1,\ldots, z_\rme^m)$ as the number of observations.
-The parameters $\theta$ are estimated through gradient descent during the training.
+Note that the function $f_\eta$ does not build as many encoding states $(z_\rme^1,\ldots, z_\rme^m)$ as the number of observations.
+%The parameters $\theta$ are estimated through gradient descent during the training.
 
-\paragraph{Quantization} Consider a codebook of $K$ vectors $\rme_{1:K} \in \mathbb{R}^d$, $d \ll D$, and consider a variational family $q_\varphi(z_q^{1:m}|z_e^{1:m})$ given by a recurrent neural network. Set$h^0 = 0$, and for all $1 \leq j \leq m$ and all $1 \leq k \leq K$,
+\paragraph{Quantization} Consider a variational family $q_\varphi(z_q^{1:m}|z_e^{1:m})$ given by a recurrent neural network. Set $h^0 = 0$, and for all $1 \leq j \leq m$ and all $1 \leq k \leq K$,
 \begin{align*}
     h^j &= \tanh(W_z z_e^j + W_h h^{j-1} + b)\,, \\
-    p^j_k &= \texttt{softmax}(- \| \rme_k - h^j\|^2)\,, 
+    p^j &= \texttt{softmax}\left(\left\{- \| \rme_k - h^j\|^2\right\}_{1\leqslant k \leqslant K}\right)\,, 
 \end{align*}
-where $W_z, W_h$ and $b$ are the unknownweight matrices and vector of the neural network. In the specific conditions where $W_z = I_d$ and $W_h = b = 0$, these equations lead to
-$$
-p^j_k = \texttt{softmax}(- \| \rme_k - \tanh(z_e^j) \|^2)\,.
-$$
+where $W_z, W_h$ and $b$ are the unknownweight matrices and vector of the neural network. 
+%In the specific conditions where $W_z = I_d$ and $W_h = b = 0$, these equations lead to
+%$$
+%p^j_k = \texttt{softmax}(- \| \rme_k - \tanh(z_e^j) \|^2)\,.
+%$$
 Codebook vectors are sampled  from the categorical distribution based on the computed $p^j_{1:K}$:
 $$
 q_\varphi(z_q^{1:m} | z_e^{1:m}) = \prod_{j=1}^m p_\theta(z_q^j|z_e^{1:j}) = \prod_{j=1}^m \texttt{Cat}(\{p^j_k\}_{k=1}^K)\,.
