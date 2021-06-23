@@ -226,6 +226,19 @@ List of experiments \& datasets to validate the new approach and compare to vq-v
 \subsection*{Mixture vq-vae}
  Let $(X^1,\ldots,X^n)$ be the observations in $\rset^D$ (a sequence of structured data, not necessarily some time series).
 
+\paragraph{Decoder i.e. generative model - mixture vq-vae.}
+Following standard vq-vae, during training it is assumed that $p_\theta(z_q)$ is uniform (i.e. we do not estimate the prior during this training phase).
+$$
+p_\theta(z_q) = \prod_{j=1}^m p(z_q^j)\eqsp,
+$$
+where $p$ is the uniform distribution on $\{1 \cdots K\}$.
+Then, consider the following model:
+$$
+p_{\theta}(X|z_q^j) = p_{\theta}(X|\vois(z_q^j)) = \varphi_{\mu_\theta(\vois(z_q^j)),\Sigma_\theta(\vois(z_q^j))}(X)\eqsp,
+$$
+where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance matrix $\Sigma$,
+and $\vois(z_q^j)$ are the vectors in a neighborhood of  $z_q^j$. We may consider for instance $\vois(z_q^j) = \{z_q^{j-p} \cdots z_q^j\}$.
+
 \paragraph{Encoder - mixture vq-vae.} Consider an encoding function $f_\theta$ and write
 $$
 (z_\rme^1,\ldots, z_\rme^m) = f_\theta(X^{1:n})\eqsp.
@@ -242,24 +255,13 @@ where $W_z, W_h$ and $b$ are the unknownweight matrices and vector of the neural
 $$
 p^j_k = \texttt{softmax}(- \| \rme_k - \tanh(z_e^j) \|^2)\,.
 $$
-
-We sample codebook vectors from the categorical distribution based on the computed $p^j_{1:K}$:
+Codebook vectors are sampled  from the categorical distribution based on the computed $p^j_{1:K}$:
 $$
 q_\varphi(z_q^{1:m} | z_e^{1:m}) = \prod_{j=1}^m p_\theta(z_q^j|z_e^{1:j}) = \prod_{j=1}^m \texttt{Cat}(\{p^j_k\}_{k=1}^K)\,.
 $$
 During training, we replace the categorical distribution by a Gumbel distribution, in order to define a differentiable quantization.
 
-\paragraph{Decoder i.e. generative model - mixture vq-vae.}
-Following standard vq-vae, during training it is assumed that $p_\theta(z_q)$ is uniform (i.e. we do not estimate the prior during this training phase).
-$$
-p_\theta(z_q) = \prod_{j=1}^m p_\theta(z_q^j) \simeq \mathcal{U}(\{1 \cdots K\})
-$$
-Then, consider the following model:
-$$
-p_{\theta}(X|z_q^j) = p_{\theta}(X|\vois(z_q^j)) = \varphi_{\mu_\theta(\vois(z_q^j)),\Sigma_\theta(\vois(z_q^j))}(X)
-$$
-where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance matrix $\Sigma$,
-and $\vois(z_q^j)$ are the vectors in a neighborhood of  $z_q^j$. We may consider for instance $\vois(z_q^j) = \{z_q^{j-p} \cdots z_q^j\}$.
+
 
 \paragraph{Training}
 We minimize the loss
