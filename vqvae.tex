@@ -19,7 +19,7 @@
 \lhead{}
 \rhead{}
 
-
+\DeclareUnicodeCharacter{2212}{-}
 \usepackage{geometry}
 \pagestyle{fancy}
 
@@ -224,7 +224,7 @@ List of experiments \& datasets to validate the new approach and compare to vq-v
 
 
 \subsection*{Mixture vq-vae}
- Let $(X^1,\ldots,X^n)$ be the observations in $\rset^D$ (a sequence of structured data, not necessarily some time series).  It is assumed that the distribution of $X$ depends on a hidden sequence of discrete states $(z_q^1,\ldots, z_q^n)$ taking values in $\{1,\ldots,K\}$ through  embedding vectors $(\rme^1,\ldots,\rme^K)$ in $\rset^m$. 
+ Let $(X^1,\ldots,X^n)$ be the observations in $\rset^D$ (a sequence of structured data, not necessarily some time series).  It is assumed that the distribution of $X$ depends on a hidden sequence of discrete states $(z_q^1,\ldots, z_q^n)$ taking values in $\{1,\ldots,K\}$ through  embedding vectors $(\rme^1,\ldots,\rme^K)$ in $\rset^m$.
 
 \paragraph{Decoder i.e. generative model - mixture vq-vae.}
 Following the standard vq-vae approach, during training it is assumed that the prior distribution of the hidden states is uniform on $\{1 \cdots K\}$. %$p_\theta(z_q)$ is uniform (i.e. we do not estimate the prior during this training phase).
@@ -248,9 +248,9 @@ Note that the function $f_\eta$ does not build as many encoding states $(z_\rme^
 \paragraph{Quantization} Consider a variational family $q_\varphi(z_q^{1:m}|z_e^{1:m})$ given by a recurrent neural network. Set $h^0 = 0$, and for all $1 \leq j \leq m$ and all $1 \leq k \leq K$,
 \begin{align*}
     h^j &= \tanh(W_z z_e^j + W_h h^{j-1} + b)\,, \\
-    p^j &= \texttt{softmax}\left(\left\{- \| \rme_k - h^j\|^2\right\}_{1\leqslant k \leqslant K}\right)\,, 
+    p^j &= \texttt{softmax}\left(\left\{- \| \rme_k - h^j\|^2\right\}_{1\leqslant k \leqslant K}\right)\,,
 \end{align*}
-where $W_z, W_h$ and $b$ are the unknownweight matrices and vector of the neural network. 
+where $W_z, W_h$ and $b$ are the unknownweight matrices and vector of the neural network.
 %In the specific conditions where $W_z = I_d$ and $W_h = b = 0$, these equations lead to
 %$$
 %p^j_k = \texttt{softmax}(- \| \rme_k - \tanh(z_e^j) \|^2)\,.
@@ -276,6 +276,34 @@ If we consider $\Sigma_\theta$ to be a diagonal matrix, with values $\Sigma_\the
 \end{align*}
 where constant terms have been omitted.
 
+
+\paragraph{Alternate model: Gumbel Diffusion in latent space}
+We consider a similar mixture VQ-VAE model, with same encoder and decoder. However, instead of modeling sequential dependancies in the latent space using a RNN for $q_\varphi(z_q^{1:m}|z_e^{1:m})$, we instead take inspiration from score-based diffusion models. First, as mentionned previously, recall that the categorical distribution is replaced by a Gumbel distribution:
+\begin{align*}
+	h_k^l &= - \| \rme_k - z_e^l\|^2\,, \\
+	p_k^l &= \frac{e^{((G_k + log(h_k^l)) / \tau)}}{\sum_j e^{((G_j + log(h_j^l)) / \tau)}}\,, \\
+	z_q^l &= \sum_{k=1}^K p_k^l \rme_k\,. \\
+\end{align*}
+
+where $G_k$ is a Gumbel noise, and $\tau$ a temperature ($\tau \rightarrow 0$ is similar to a hard sampling under the softmax probabilities, while $\tau \rightarrow \infty$ similar to a uniform distribution). Our intuition is that we should gradually anneal the distribution with well chosen $\tau$, to get two interesting benefits.
+\begin{enumerate}
+	\item a stable training, as we will explore well the different $\rme_k$ when $\tau$ is high (a common problem in VQ-VAEs), while having a good Categorical sampling approximation when $\tau$ is low.
+	\item a natural way to learn a "prior" for the latent distribution, by learning to invert the annealing process.
+\end{enumerate}
+This motivates a "Gumbel-diffusion process".
+
+Following \url{https://arxiv.org/abs/2102.05379}, we consider the following categorical diffusion process $q_D$ (omitting $j$ index for clarity) with $\beta_t$ chance to resample a category uniformly:
+\begin{align*}
+	q_D(x_0) &= \texttt{Cat}(\{p_k\}_{k=1}^K)\,, \\
+	q_D(x_t | x_{t−1}) &= \texttt{Cat}(x_t|(1 − \beta_t)x_{t−1} + \beta_t/K)\,, \\
+	q_D(x_t|x_0) &= \texttt{Cat}(x_t|\alpha^\prime_t x_0 + (1 − \alpha^\prime_t)/K)\,.
+\end{align*}
+
+Here $\alpha_t = 1 − \beta_t$ and $\alpha^\prime_t = \prod_{t^\prime=1}^t \alpha_t^\prime$. We refer to the paper for more information (this is a draft).
+
+With further work, it should be possible to build a noise conditional score convolutional neural network $s(x_t, \beta_t)$ which learns the score of the perturbed distribution $\nabla_{\x_t} \log q_D(x_t, \beta_t)$. We would then be able to use a langevin dynamics process making use of this score network and a random init vector $x_T$ from a uniform distribution to produce a sample $x_0^\prime$ after $T$ steps, from the "prior" distribution with the right global dependencies.
+
+It would be interesting to relate the Gumble Softmax with this process formally, to build the complete loss function, as well as to see which steps of the diffusion process would be used to learn the encoder / decoder / codebook parameters (there are several possibilies here, 1) taking only $x_0$, 2) selecting a random step, 3) using all of them $x_0$ up to $x_T$?)
 %where $\|z_\rme^{k}-\rme_i\|^2_{\Omega} = (z_\rme^{k}-\rme_i)^T\Omega (z_\rme^{k}-\rme_i)$. This mean-field variational distribution assumes that the latent $(z_q^1,\ldots, z_q^m)$ are independent given $(X^1,\ldots,X^n)$ and $(z_\rme^1,\ldots, z_\rme^m)$.
 %The variational posterior can be defined as a marginal distribution, $q_\phi(z_q|x) = \int
 %\bar{q}_\phi (z_q, z_\rme |x) \rmd z_\rme$, where $\bar{q}_\phi(z_q,z_\rme|x)$ has an explicit closed-form.
