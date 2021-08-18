@@ -219,9 +219,39 @@
 \end{abstract}
 
 
-\subsection*{Experiments}
-List of experiments \& datasets to validate the new approach and compare to vq-vae \url{https://docs.google.com/document/d/1a7lhplsBraTD3qmvsHXdoPmQj00YijT2XMWpHEFeb58/edit}
+\subsection*{First Experiments}
+First experiments were focused on baselines on images and a few timeseries \footnote{List of experiments \& datasets to validate the new approach and compare to vq-vae \url{https://docs.google.com/document/d/1a7lhplsBraTD3qmvsHXdoPmQj00YijT2XMWpHEFeb58/edit}}.
 
+\begin{itemize}
+	\item \textbf{Datasets} implemented: MNIST, FashionMNIST, Cifar-10, (timeseries) Weather and Air quality
+	\item \textbf{Baselines and architectures} Simple VAE model, with Feedforward, convolutional (simple) and ResNet encoder / Decoder; IWAE ; VQ-VAE, with standard implementation (straight-through gradient passing over the codebook), including the exponential moving average trick to stabilize the training of the codebook. \\
+	A pixelCNN (pixelSnail) autoregressive \textit{prior} model, to learn the unconditionnal marginalized $q(z_q)$ by encoding the full dataset using the encoder.\\
+	VQ-VAE with Gumbel-softmax trick, which alleviates the need for other gradient copying tricks and unstabilities (very used in VQ-VAE implementations)\\
+	the Sequential mixture VQ-VAE, as described below.
+  \item \textbf{Metrics} implemented: NLL on valset, Bits per dim ; FID score (pictures only) ; Inception Score (pictures only, in progress).
+\end{itemize}
+
+The sequential mixture VAE has only been tested on image generation for now. In first experiments, it achieves slightly worse scores than the standard VQ-VAE on FashionMNIST (the NLL of seqVQVAE is $0.1$ worse than VQ-VAE). The following figures show the first reconstructions. However, we did not tune the hyperparameters or the model heavily, as the sequential model does not naturally fit very well the image generation problem (it would be better on sequential data).
+
+\begin{figure}[htp]
+    \begin{center}
+    \includegraphics[width=0.37\textwidth]{images/seqvae3.png}
+    \caption{FashionMNIST first reconstruction experiments. Top to bottom: originals, Reconstructions of VQ-VAE, Reconstructions of SeqVAE}
+    \end{center}
+\end{figure}
+
+\begin{figure}[htp]
+    \begin{center}
+    \includegraphics[width=0.37\textwidth]{images/originals.png} \\
+		\includegraphics[width=0.37\textwidth]{images/vqvae2.png} \\
+		\includegraphics[width=0.37\textwidth]{images/seqvqvae2.png}
+    \caption{Cifar first reconstruction experiments. Top to bottom: originals, Reconstructions of VQ-VAE, Reconstructions of SeqVAE}
+    \end{center}
+\end{figure}
+
+
+\clearpage
+\newpage
 
 \subsection*{Mixture vq-vae}
  Let $(X^1,\ldots,X^n)$ be the observations in $\rset^D$ (a sequence of structured data, not necessarily some time series).  It is assumed that the distribution of $X$ depends on a hidden sequence of discrete states $(z_q^1,\ldots, z_q^n)$ taking values in $\{1,\ldots,K\}$ through  embedding vectors $(\rme^1,\ldots,\rme^K)$ in $\rset^m$.
@@ -261,8 +291,6 @@ q_\varphi(z_q^{1:m} | z_e^{1:m}) = \prod_{j=1}^m p_\theta(z_q^j|z_e^{1:j}) = \pr
 $$
 During training, we replace the categorical distribution by a Gumbel distribution, in order to define a differentiable quantization.
 
-
-
 \paragraph{Training}
 We minimize the loss
 $$
@@ -276,8 +304,36 @@ If we consider $\Sigma_\theta$ to be a diagonal matrix, with values $\Sigma_\the
 \end{align*}
 where constant terms have been omitted.
 
+\paragraph{Sequential data case}
+In the case of sequential data, we may consider the model
+$$
+p_{\theta}(X|z_q) = \prod_{j=1}^n p_{\theta}(X^j|\vois(z_q^j)) = \varphi_{\mu_\theta(\bar e^j),\Sigma_\theta(\bar e^j)}(X)\eqsp,
+$$
+Where the neighborhood $\vois(z_q^j)$ and $\bar e^j$ are defined such that a single $X^t$ only depend on a few previous corresponding $z_q^j$ (note that $t \in \rset^n$ is typically larger than $j \in \rset^m$).
 
-\paragraph{Alternate model: Gumbel Diffusion in latent space}
+\paragraph{Diffusion-based variational model suited for images and sequential data such as text}
+We consider an alternative model, where we do not consider the prior uniform anymore, but rather parametrize it with a diffusion model: consider a family of progressively noised variables $Z_q^0, \cdots, Z_q^T$, where we choose $Z_q^T$ to be uniform. We consider the following model:
+
+$$
+p_{\theta}(Z_q^0, \cdots, Z_q^T, X) = p_{\theta}(z_q^T) p_{\theta}(z_q^0|z_q^1) \cdots p_{\theta}(X|z_q)
+$$
+
+where $p_{\theta}(z_q^0|z_q^1)$ is a newly parametrized denoising model, typically a deep neural network, and $p_{\theta}(X|z_q)$ is defined as in previous section. We then consider the following variational familly:
+
+$$
+q_{\varphi}(Z_q^0, \cdots, Z_q^T | X) = q_{\varphi}(Z_q^0 | X) q_{\varphi}(Z_q^1 | Z_q^0, X) \cdots
+$$
+
+Where $q_{\varphi}(Z_q^0 | X)$ is similar to previous section. Using the auxiliary variational inference framework (AVI), where $u = Z_q^{1:T}$, $x = Z_q^0$ and $z = X$, we have:
+$$
+\mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[ \log\left(\frac{p_\theta(Z_q^{0:T})p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0|X) q_\varphi(Z_q^{1:T}|Z_q^0)}\right) \right]
+$$
+
+\clearpage
+\newpage
+
+
+\paragraph{a few words on Gumbel-Softmax}
 We consider a similar mixture VQ-VAE model, with same encoder and decoder. However, instead of modeling sequential dependancies in the latent space using a RNN for $q_\varphi(z_q^{1:m}|z_e^{1:m})$, we instead take inspiration from score-based diffusion models. First, as mentionned previously, recall that the categorical distribution is replaced by a Gumbel distribution:
 \begin{align*}
 	h_k^l &= - \| \rme_k - z_e^l\|^2\,, \\
@@ -292,6 +348,7 @@ where $G_k$ is a Gumbel noise, and $\tau$ a temperature ($\tau \rightarrow 0$ is
 \end{enumerate}
 This motivates a "Gumbel-diffusion process".
 
+\paragraph{a few words on Categorical Diffusion Process}
 Following \url{https://arxiv.org/abs/2102.05379}, we consider the following categorical diffusion process $q_D$ (omitting $j$ index for clarity) with $\beta_t$ chance to resample a category uniformly:
 \begin{align*}
 	q_D(x_0) &= \texttt{Cat}(\{p_k\}_{k=1}^K)\,, \\
