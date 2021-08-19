@@ -220,15 +220,18 @@
 \end{abstract}
 
 
-\subsection*{First Experiments}
-First experiments were focused on baselines on images and a few timeseries \footnote{List of experiments \& datasets to validate the new approach and compare to vq-vae \url{https://docs.google.com/document/d/1a7lhplsBraTD3qmvsHXdoPmQj00YijT2XMWpHEFeb58/edit}}.
+\subsection{First Experiments}
+First experiments were focused on baselines on images and a few timeseries. \footnote{List of experiments \& datasets to validate the new approach and compare to vq-vae \url{https://docs.google.com/document/d/1a7lhplsBraTD3qmvsHXdoPmQj00YijT2XMWpHEFeb58/edit}}
 
 \begin{itemize}
-	\item \textbf{Datasets} implemented: MNIST, FashionMNIST, Cifar-10, (timeseries) Weather and Air quality
-	\item \textbf{Baselines and architectures} Simple VAE model, with Feedforward, convolutional (simple) and ResNet encoder / Decoder; IWAE ; VQ-VAE, with standard implementation (straight-through gradient passing over the codebook), including the exponential moving average trick to stabilize the training of the codebook. \\
-	A pixelCNN (pixelSnail) autoregressive \textit{prior} model, to learn the unconditionnal marginalized $q(z_q)$ by encoding the full dataset using the encoder.\\
-	VQ-VAE with Gumbel-softmax trick, which alleviates the need for other gradient copying tricks and unstabilities (very used in VQ-VAE implementations)\\
-	the Sequential mixture VQ-VAE, as described below.
+	\item \textbf{Datasets} implemented: {\em MNIST}, {\em FashionMNIST}, {\em Cifar-10}, and a few timeseries {\em Weather} and {\em Air quality}.
+	\item \textbf{Baselines and architectures} Simple VAE model, with Feed Forward, Convolutional (simple) and ResNet encoder / Decoder; IWAE ; VQ-VAE, with standard implementation (straight-through gradient passing over the codebook), including the exponential moving average trick to stabilize the training of the codebook. 
+
+	A pixelCNN (pixelSnail) autoregressive \textit{prior} model, to learn the unconditionnal marginalized $q(z_q)$ by encoding the full dataset using the encoder.
+
+	VQ-VAE with Gumbel-softmax trick, which alleviates the need for other gradient copying tricks and unstabilities (very used in VQ-VAE implementations)
+
+	The Sequential mixture VQ-VAE, as described below.
   \item \textbf{Metrics} implemented: NLL on valset, Bits per dim ; FID score (pictures only) ; Inception Score (pictures only, in progress).
 \end{itemize}
 
@@ -254,7 +257,7 @@ The sequential mixture VAE has only been tested on image generation for now. In 
 \clearpage
 \newpage
 
-\subsection*{Mixture vq-vae}
+\subsection{Mixture vq-vae with "posterior" training of the prior}
  Let $(X^1,\ldots,X^n)$ be the observations in $\rset^D$ (a sequence of structured data, not necessarily some time series).  It is assumed that the distribution of $X$ depends on a hidden sequence of discrete states $(z_q^1,\ldots, z_q^n)$ taking values in $\{1,\ldots,K\}$ through  embedding vectors $(\rme^1,\ldots,\rme^K)$ in $\rset^m$.
 
 \paragraph{Decoder i.e. generative model - mixture vq-vae.}
@@ -267,7 +270,7 @@ Then, consider the following model:
 $$
 p_{\theta}(X|z_q) = \prod_{j=1}^n p_{\theta}(X^j|\vois(z_q^j)) = \varphi_{\mu_\theta(\bar e^j),\Sigma_\theta(\bar e^j)}(X)\eqsp,
 $$
-where $\vois(z_q^j)$ are the vectors in a neighborhood of  $z_q^j$, $\bar e^j = \{e^{z_q^\ell}\;;\; z_q^\ell\in \vois(z_q^j)\}$ and where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance matrix $\Sigma$. We may consider for instance $\vois(z_q^j) = \{z_q^{j-p} \cdots z_q^j\}$.
+where $\vois(z_q^j)$ are the vectors in a neighborhood of  $z_q^j$, $\bar e^j = \{e^{z_q^\ell}\;;\; z_q^\ell\in \vois(z_q^j)\}$ and where $\varphi_{\mu,\sigma}$ is the Gaussian probability density function with mean $\mu$ and variance matrix $\Sigma$. We may consider for instance $\vois(z_q^j) = \{z_q^{j-p} \cdots z_q^j\}$, a neighborhood given by a one dimensional convolution.
 
 \paragraph{Encoder - mixture vq-vae.} Consider an encoding function $f_\theta$ and write
 $$
@@ -312,28 +315,30 @@ p_{\theta}(X|z_q) = \prod_{j=1}^n p_{\theta}(X^j|\vois(z_q^j)) = \varphi_{\mu_\t
 $$
 Where the neighborhood $\vois(z_q^j)$ and $\bar e^j$ are defined such that a single $X^t$ only depend on a few previous corresponding $z_q^j$ (note that $t \in \rset^n$ is typically larger than $j \in \rset^m$).
 
-\paragraph{Diffusion-based variational model suited for images and sequential data such as text}
-We consider an alternative model, where we do not consider the prior uniform anymore, but rather parametrize it with a diffusion model: consider a family of progressively noised variables $Z_q^0, \cdots, Z_q^T$, where we choose $Z_q^T$ to be uniform. We consider the following model:
-
+\subsection{Diffusion-based Mixture vq-vae}
+Inspired by {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}, \url{https://arxiv.org/pdf/2102.05379.pdf}.
+%\paragraph{Diffusion-based variational model suited for images and sequential data such as text}
+In this section we write $Z_q = (z_q^1,\ldots,z_q^m)$. We consider an alternative model, where we do not consider the prior uniform anymore, but rather parametrize it with a diffusion model: consider a family of progressively noised variables $Z_q^0, \cdots, Z_q^T$, where we choose $Z_q^T$ to be uniform. We consider the following model:
 $$
-p_{\theta}(Z_q^0, \cdots, Z_q^T, X) = p_{\theta}(z_q^T) p_{\theta}(z_q^0|z_q^1) \cdots p_{\theta}(X|z_q)
+p_{\theta}(Z_q^0, \cdots, Z_q^T, X) = p_{\theta}(Z_q^T) p_{\theta}(Z_q^0|Z_q^1) \cdots p_{\theta}(X|Z^0_q)\,,
 $$
-
-where $p_{\theta}(z_q^0|z_q^1)$ is a newly parametrized denoising model, typically a deep neural network, and $p_{\theta}(X|z_q)$ is defined as in previous section. We then consider the following variational familly:
-
+where $p_{\theta}(Z_q^t|Z_q^{t+1})$ is a newly parametrized denoising model, typically a deep neural network, and $p_{\theta}(X|Z^0_q)$ is defined as in previous section. The model $p_{\theta}(Z_q^t|Z_q^{t+1})$ aims at denoising the latent data. We then consider the following variational familly:
 $$
-q_{\varphi}(Z_q^0, \cdots, Z_q^T | X) = q_{\varphi}(Z_q^0 | X) q_{\varphi}(Z_q^1 | Z_q^0, X) \cdots
+q_{\varphi}(Z_q^0, \cdots, Z_q^T | X) = q_{\varphi}(Z_q^0 | X) q_{\varphi}(Z_q^1 | Z_q^0) \ldots  q_{\varphi}(Z_q^T | Z_q^0, \ldots,Z_q^{T-1})\,,
 $$
-
-Where $q_{\varphi}(Z_q^0 | X)$ is similar to previous section. Using the auxiliary variational inference framework (AVI), where $u = Z_q^{1:T}$, $x = Z_q^0$ and $z = X$, we have:
+where $q_{\varphi}(Z_q^0 | X)$ is similar to previous section. The model $q_{\varphi}(Z_q^t | Z_q^{t-1}, X)$ gradually adds noise and is known, see (11) in  {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}. Using the auxiliary variational inference framework (AVI), where $u = Z_q^{1:T}$, $x = Z_q^0$ and $z = X$, we have:
 $$
-\mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[ \log\left(\frac{p_\theta(Z_q^{0:T})p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0|X) q_\varphi(Z_q^{1:T}|Z_q^0)}\right) \right]
+\mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[ \log\left(\frac{p_\theta(Z_q^{0:T})p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0|X) q_\varphi(Z_q^{1:T}|Z_q^0)}\right) \right]\,.
 $$
-
+This loss can be decomposed into two terms
+$$
+\mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[\log p_\theta(Z_q^T) + \sum_{t=1}^T\log  \frac{p_\theta(Z_q^{t-1}|Z_q^t)}{q_\varphi(Z_q^{t}|Z_q^{t-1})} \right] + \mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[ \log\left(\frac{p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0|X)}\right) \right]\,.
+$$
 \clearpage
 \newpage
 
 
+\section*{Additional notes, old drafts}
 \paragraph{a few words on Gumbel-Softmax}
 We consider a similar mixture VQ-VAE model, with same encoder and decoder. However, instead of modeling sequential dependancies in the latent space using a RNN for $q_\varphi(z_q^{1:m}|z_e^{1:m})$, we instead take inspiration from score-based diffusion models. First, as mentionned previously, recall that the categorical distribution is replaced by a Gumbel distribution:
 \begin{align*}
