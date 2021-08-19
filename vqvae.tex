@@ -316,7 +316,7 @@ $$
 Where the neighborhood $\vois(z_q^j)$ and $\bar e^j$ are defined such that a single $X^t$ only depend on a few previous corresponding $z_q^j$ (note that $t \in \rset^n$ is typically larger than $j \in \rset^m$).
 
 \subsection{Diffusion-based Mixture vq-vae}
-Inspired by {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}, \url{https://arxiv.org/pdf/2102.05379.pdf}.
+Inspired by {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}, \url{https://arxiv.org/pdf/2102.05379.pdf} to perform joint training of the prior and the variational family.
 %\paragraph{Diffusion-based variational model suited for images and sequential data such as text}
 In this section we write $Z_q = (z_q^1,\ldots,z_q^m)$. We consider an alternative model, where we do not consider the prior uniform anymore, but rather parametrize it with a diffusion model: consider a family of progressively noised variables $Z_q^0, \cdots, Z_q^T$, where we choose $Z_q^T$ to be uniform. We consider the following model:
 $$
@@ -334,6 +334,7 @@ This loss can be decomposed into two terms
 $$
 \mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[\log p_\theta(Z_q^T) + \sum_{t=1}^T\log  \frac{p_\theta(Z_q^{t-1}|Z_q^t)}{q_\varphi(Z_q^{t}|Z_q^{t-1})} \right] + \mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[ \log\left(\frac{p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0|X)}\right) \right]\,.
 $$
+The first term corresponds to the variational loss of {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)} and can be lower bounded by (3). The second term is the usual variational loss given in the previous section.
 \clearpage
 \newpage
 
