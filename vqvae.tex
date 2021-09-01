@@ -225,7 +225,7 @@ First experiments were focused on baselines on images and a few timeseries. \foo
 
 \begin{itemize}
 	\item \textbf{Datasets} implemented: {\em MNIST}, {\em FashionMNIST}, {\em Cifar-10}, and a few timeseries {\em Weather} and {\em Air quality}.
-	\item \textbf{Baselines and architectures} Simple VAE model, with Feed Forward, Convolutional (simple) and ResNet encoder / Decoder; IWAE ; VQ-VAE, with standard implementation (straight-through gradient passing over the codebook), including the exponential moving average trick to stabilize the training of the codebook. 
+	\item \textbf{Baselines and architectures} Simple VAE model, with Feed Forward, Convolutional (simple) and ResNet encoder / Decoder; IWAE ; VQ-VAE, with standard implementation (straight-through gradient passing over the codebook), including the exponential moving average trick to stabilize the training of the codebook.
 
 	A pixelCNN (pixelSnail) autoregressive \textit{prior} model, to learn the unconditionnal marginalized $q(z_q)$ by encoding the full dataset using the encoder.
 
@@ -335,6 +335,28 @@ $$
 \mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[\log p_\theta(Z_q^T) + \sum_{t=1}^T\log  \frac{p_\theta(Z_q^{t-1}|Z_q^t)}{q_\varphi(Z_q^{t}|Z_q^{t-1})} \right] + \mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[ \log\left(\frac{p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0|X)}\right) \right]\,.
 $$
 The first term corresponds to the variational loss of {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)} and can be lower bounded by (3). The second term is the usual variational loss given in the previous section.
+
+\textcolor{red}{todo} include considerations about using KL instead of directly the ELBO as written, and the definition of $p_{\theta}(Z_q^{t-1}|Z_q^t)$ using $q_\varphi(Z_q^{t-1}|Z_q^t, \hat{Z_q^0})$, with $\hat{Z_q^0} = \mu_\theta(Z_q^t, t)$.
+
+\subsection{Implementation details for Diffusion-vqvae}
+The previous model can be implemented using the following algorithm:
+
+\begin{itemize}
+	\item Encode the input with a CNN $f_\eta$: $(z_\rme^1,\ldots, z_\rme^m) = f_\eta(X^{1:n})$, with $m \ll n$. We will skip the dimensions indices in later steps. This defines trainable parameters $\eta$.
+	\item Produce the latent variable $Z_q^0$ from $Z_e$ using the standard VQ-VAE method and the codebook (trainable parameters $e^j \in \rset^{K \times D}$).
+	\item Produce the noisy chain $Z_q^{1:T}$ from $Z_q^0$ and the noise process (no trainable parameters).
+	\item Compute the reverse process to get $p_\theta(Z_q^{t-1}|Z_q^t)$ as a function of the diffusion-denoising network. $d_\theta(Z_q^t, t)$, which defines additional trainable parameters, and has input and output values in $\rset^{K \times M}$
+	\item Produce the distribution of the reconstructed $\hat{X}$: $\mu_\theta(e^{Z_q^0}),\Sigma_\theta(e^{Z_q^0})$.
+	\item Compute the loss using the standard VQ-VAE terms (reconstruction, codebook) and the KL terms from $p_\theta(Z_q^{t-1}|Z_q^t)$ and $q_\varphi(Z_q^{t-1}|Z_q^t, \hat{Z_q^0})$.
+\end{itemize}
+
+And finally, to use the model at inference, the following algorithm is used:
+\begin{itemize}
+	\item Sample $Z_q^T$ uniformly.
+	\item Produce a denoised chain $Z_q^{0:T-1}$ using the denoising network in an iterated $T$ steps process: $Z_q^{t-1} = d_\theta(Z_q^t, t)$.
+	\item Produce the output distribution of $\hat{X} \sim \varphi_{\mu_\theta(e^{Z_q^0}),\Sigma_\theta(e^{Z_q^0})}$ and sample from it.
+\end{itemize}
+
 \clearpage
 \newpage
 
