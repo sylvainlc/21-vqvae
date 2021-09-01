@@ -360,6 +360,24 @@ And finally, to use the model at inference, the following algorithm is used:
 \clearpage
 \newpage
 
+\section{Gumbel-Diffusion}
+In this section, we present an alternative to the Multinomial diffusion described in {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}, \url{https://arxiv.org/pdf/2102.05379.pdf}, namely the Gumbel-diffusion. The goal is to integrate more directly the Gumbel softmax in the model.
+
+As previously, we consider the following model:
+$$
+p_{\theta}(Z_q^0, \cdots, Z_q^T, X) = p_{\theta}(Z_q^T) p_{\theta}(Z_q^0|Z_q^1) \cdots p_{\theta}(X|Z^{0:T}_q)\,,
+$$
+We then consider the following variational familly:
+$$
+q_{\varphi}(Z_q^0, \cdots, Z_q^T | X) = q_{\varphi}(Z_q^0 | X) q_{\varphi}(Z_q^1 | Z_q^0, X) \ldots  q_{\varphi}(Z_q^T | Z_q^0, \ldots,Z_q^{T-1}, X)\,,
+$$
+where $q_{\varphi}(Z_q^0 | Z_e) = q_{\varphi}(Z_q^0 | X)$, having $Z_e = f_\eta(X)$ similarly to previous section. The model $q_{\varphi}(Z_q^t | Z_q^{t-1}, Z_e)$ gradually adds Gumble noise vectors $\mathbf{G}^t = \log(-\log(\mathcal{U}(0,1)))$:
+\begin{align*}
+	Z_q^0 &= softmax(\{- \| \rme_k - Z_e\|^2/ \tau\}_k )\,, \\
+	Z_q^t &= softmax((\mathbf{G}^t + log(Z_q^{t-1})) / \tau)\,, \\
+\end{align*}
+
+\textcolor{red}{todo} see if we can express simply the reverse process $q_{\varphi}(Z_q^{t-1} | Z_q^t, Z_q^0)$
 
 \section*{Additional notes, old drafts}
 \paragraph{a few words on Gumbel-Softmax}
