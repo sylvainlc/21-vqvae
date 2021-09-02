@@ -220,11 +220,11 @@
 \end{abstract}
 
 
-\subsection{First Experiments}
+\section{First Experiments}
 First experiments were focused on baselines on images and a few timeseries. \footnote{List of experiments \& datasets to validate the new approach and compare to vq-vae \url{https://docs.google.com/document/d/1a7lhplsBraTD3qmvsHXdoPmQj00YijT2XMWpHEFeb58/edit}}
 
 \begin{itemize}
-	\item \textbf{Datasets} implemented: {\em MNIST}, {\em FashionMNIST}, {\em Cifar-10}, and a few timeseries {\em Weather} and {\em Air quality}.
+	\item \textbf{Datasets} implemented: {\em MNIST}, {\em FashionMNIST}, {\em Cifar-10}, and timeseries {\em Weather} and {\em Air quality}.
 	\item \textbf{Baselines and architectures} Simple VAE model, with Feed Forward, Convolutional (simple) and ResNet encoder / Decoder; IWAE ; VQ-VAE, with standard implementation (straight-through gradient passing over the codebook), including the exponential moving average trick to stabilize the training of the codebook.
 
 	A pixelCNN (pixelSnail) autoregressive \textit{prior} model, to learn the unconditionnal marginalized $q(z_q)$ by encoding the full dataset using the encoder.
@@ -257,8 +257,8 @@ The sequential mixture VAE has only been tested on image generation for now. In 
 \clearpage
 \newpage
 
-\subsection{Mixture vq-vae with "posterior" training of the prior}
- Let $(X^1,\ldots,X^n)$ be the observations in $\rset^D$ (a sequence of structured data, not necessarily some time series).  It is assumed that the distribution of $X$ depends on a hidden sequence of discrete states $(z_q^1,\ldots, z_q^n)$ taking values in $\{1,\ldots,K\}$ through  embedding vectors $(\rme^1,\ldots,\rme^K)$ in $\rset^m$.
+\section{RNN-based mixture vq-vae with "posterior" training of the prior (for time series)}
+ Let $(X^1,\ldots,X^n)$ be the observations in $\rset^D$.  It is assumed that the distribution of $X$ depends on a hidden sequence of discrete states $(z_q^1,\ldots, z_q^n)$ taking values in $\{1,\ldots,K\}$ through  embedding vectors $(\rme^1,\ldots,\rme^K)$ in $\rset^m$.
 
 \paragraph{Decoder i.e. generative model - mixture vq-vae.}
 Following the standard vq-vae approach, during training it is assumed that the prior distribution of the hidden states is uniform on $\{1 \cdots K\}$. %$p_\theta(z_q)$ is uniform (i.e. we do not estimate the prior during this training phase).
@@ -315,7 +315,7 @@ p_{\theta}(X|z_q) = \prod_{j=1}^n p_{\theta}(X^j|\vois(z_q^j)) = \varphi_{\mu_\t
 $$
 Where the neighborhood $\vois(z_q^j)$ and $\bar e^j$ are defined such that a single $X^t$ only depend on a few previous corresponding $z_q^j$ (note that $t \in \rset^n$ is typically larger than $j \in \rset^m$).
 
-\subsection{Diffusion-based Mixture vq-vae}
+\section{Diffusion-based Mixture vq-vae}
 Inspired by {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}, \url{https://arxiv.org/pdf/2102.05379.pdf} to perform joint training of the prior and the variational family.
 %\paragraph{Diffusion-based variational model suited for images and sequential data such as text}
 In this section we write $Z_q = (z_q^1,\ldots,z_q^m)$. We consider an alternative model, where we do not consider the prior uniform anymore, but rather parametrize it with a diffusion model: consider a family of progressively noised variables $Z_q^0, \cdots, Z_q^T$, where we choose $Z_q^T$ to be uniform. We consider the following model:
@@ -326,7 +326,10 @@ where $p_{\theta}(Z_q^t|Z_q^{t+1})$ is a newly parametrized denoising model, typ
 $$
 q_{\varphi}(Z_q^0, \cdots, Z_q^T | X) = q_{\varphi}(Z_q^0 | X) q_{\varphi}(Z_q^1 | Z_q^0) \ldots  q_{\varphi}(Z_q^T | Z_q^0, \ldots,Z_q^{T-1})\,,
 $$
-where $q_{\varphi}(Z_q^0 | X)$ is similar to previous section. The model $q_{\varphi}(Z_q^t | Z_q^{t-1}, X)$ gradually adds noise and is known, see (11) in  {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}. Using the auxiliary variational inference framework (AVI), where $u = Z_q^{1:T}$, $x = Z_q^0$ and $z = X$, we have:
+where $q_{\varphi}(Z_q^0 | X)$ is similar to previous section. The model $q_{\varphi}(Z_q^t | Z_q^{t-1}, X)$ gradually adds noise and is known, see (11) in  {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}.
+In the initial version $ p_{\theta}(X|Z^0_q)$ and $q_{\varphi}(Z_q^0 | X)$ can be chosen as in classical vq-vae to understand the impact of the noise diffusion process.
+
+Using the auxiliary variational inference framework (AVI), where $u = Z_q^{1:T}$, $x = Z_q^0$ and $z = X$, we have:
 $$
 \mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[ \log\left(\frac{p_\theta(Z_q^{0:T})p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0|X) q_\varphi(Z_q^{1:T}|Z_q^0)}\right) \right]\,.
 $$
@@ -334,7 +337,7 @@ This loss can be decomposed into two terms
 $$
 \mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[\log p_\theta(Z_q^T) + \sum_{t=1}^T\log  \frac{p_\theta(Z_q^{t-1}|Z_q^t)}{q_\varphi(Z_q^{t}|Z_q^{t-1})} \right] + \mathbb{E}_{q_\varphi (Z_q^0, Z_q^{1:T}|X)} \left[ \log\left(\frac{p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0|X)}\right) \right]\,.
 $$
-The first term corresponds to the variational loss of {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)} and can be lower bounded by (3). The second term is the usual variational loss given in the previous section.
+The first term corresponds to the variational loss of {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)} and can be lower bounded by (3). The second term is the usual variational loss given in the previous section. The noise diffusion $q_{\varphi}(Z_q^t | Z_q^{t-1}) $ used in this paper is defined as follows: with probability $1 - \beta_t$ set $Z_q^t = Z_q^{t-1}$ and with probability $\beta_t$ sample $Z_q^t$ randomly in $\{1,\ldots, K\}$.
 
 \textcolor{red}{todo} include considerations about using KL instead of directly the ELBO as written, and the definition of $p_{\theta}(Z_q^{t-1}|Z_q^t)$ using $q_\varphi(Z_q^{t-1}|Z_q^t, \hat{Z_q^0})$, with $\hat{Z_q^0} = \mu_\theta(Z_q^t, t)$.
 
@@ -361,9 +364,7 @@ And finally, to use the model at inference, the following algorithm is used:
 \newpage
 
 \section{Gumbel-Diffusion}
-In this section, we present an alternative to the Multinomial diffusion described in {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}, \url{https://arxiv.org/pdf/2102.05379.pdf}, namely the Gumbel-diffusion. The goal is to integrate more directly the Gumbel softmax in the model.
-
-As previously, we consider the following model:
+In this section, we present an alternative to the Multinomial diffusion described in {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}, \url{https://arxiv.org/pdf/2102.05379.pdf}, namely the Gumbel-diffusion. The goal is to integrate more directly the Gumbel softmax in the model. As previously, we consider the following model:
 $$
 p_{\theta}(Z_q^0, \cdots, Z_q^T, X) = p_{\theta}(Z_q^T) p_{\theta}(Z_q^0|Z_q^1) \cdots p_{\theta}(X|Z^{0:T}_q)\,,
 $$
@@ -371,12 +372,12 @@ We then consider the following variational familly:
 $$
 q_{\varphi}(Z_q^0, \cdots, Z_q^T | X) = q_{\varphi}(Z_q^0 | X) q_{\varphi}(Z_q^1 | Z_q^0, X) \ldots  q_{\varphi}(Z_q^T | Z_q^0, \ldots,Z_q^{T-1}, X)\,,
 $$
-where $q_{\varphi}(Z_q^0 | Z_e) = q_{\varphi}(Z_q^0 | X)$, having $Z_e = f_\eta(X)$ similarly to previous section. The model $q_{\varphi}(Z_q^t | Z_q^{t-1}, Z_e)$ gradually adds Gumble noise vectors $\mathbf{G}^t = \log(-\log(\mathcal{U}(0,1)))$:
+where $q_{\varphi}(Z_q^0 | Z_e) = q_{\varphi}(Z_q^0 | X)$, having $Z_e = f_\eta(X)$ similarly as in  previous sections. The model $q_{\varphi}(Z_q^t | Z_q^{t-1}, Z_e)$ gradually adds Gumble noise vectors $\mathbf{G}^t = \log(-\log(\mathcal{U}(0,1)))$:
 \begin{align*}
 	Z_q^0 &= softmax(\{- \| \rme_k - Z_e\|^2/ \tau\}_k )\,, \\
-	Z_q^t &= softmax((\mathbf{G}^t + log(Z_q^{t-1})) / \tau)\,, \\
+	Z_q^t &= softmax((\mathbf{G}^t + log(Z_q^{t-1})) / \tau)\,.
 \end{align*}
-
+This is a more appealing noise diffusion as it adds noise more gradually than the model considered in  {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}.
 \textcolor{red}{todo} see if we can express simply the reverse process $q_{\varphi}(Z_q^{t-1} | Z_q^t, Z_q^0)$
 
 \section*{Additional notes, old drafts}
