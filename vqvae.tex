@@ -391,7 +391,19 @@ where $q_{\varphi}(Z_q^0 | Z_e) = q_{\varphi}(Z_q^0 | X)$, having $Z_e = f_\eta(
 	Z_q^t &= softmax((\mathbf{G}^t + log(Z_q^{t-1})) / \tau)\,.
 \end{align*}
 This is a more appealing noise diffusion as it adds noise more gradually than the model considered in  {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}.
-\textcolor{red}{todo} see if we can express simply the reverse process $q_{\varphi}(Z_q^{t-1} | Z_q^t, Z_q^0)$
+\textcolor{red}{todo} see if we can express simply the reverse process $q_{\varphi}(Z_q^{t-1} | Z_q^t, Z_q^0)$.
+In this case, we use that 
+$$
+q_{\varphi}(Z_q^{t-1} | Z_q^t, Z_q^0) \propto q_{\varphi}(Z_q^{t-1} | Z_q^0)q_{\varphi}(Z_q^{t} | Z_q^{t-1})
+$$
+where
+\begin{align*}
+q_{\varphi}(Z_q^{t} | Z_q^{t-1}) &= \int q_{\varphi}(Z_q^{t}, \mathbf{G}^t , \tilde{\mathbf{G}}^{t-1}| Z_q^{t-1})\mathrm{d} \mathbf{G}^t \mathrm{d} \tilde{\mathbf{G}}^{t-1}\,,\\
+&= \int q_{\varphi}(\mathbf{G}^t) q_{\varphi}(Z_q^{t}|\mathbf{G}^t)q_{\varphi}(\tilde{\mathbf{G}}^{t-1}| Z_q^{t-1})\mathrm{d} \mathbf{G}^t \mathrm{d} \tilde{\mathbf{G}}^{t-1}\,.
+\end{align*}
+The only difficulty is to obtain a sample from $q_{\varphi}(\tilde{\mathbf{G}}^{t-1}| Z_q^{t-1})$ which can be solved using Accept-reject approaches.
+
+
 
 \section*{Additional notes, old drafts}
 \paragraph{a few words on Gumbel-Softmax}
