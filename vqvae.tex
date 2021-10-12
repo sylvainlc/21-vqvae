@@ -383,16 +383,26 @@ p_{\theta}(Z_q^0, \cdots, Z_q^T, X) = p_{\theta}(Z_q^T) p_{\theta}(Z_q^0|Z_q^1) 
 $$
 We then consider the following variational familly:
 $$
-q_{\varphi}(Z_q^0, \cdots, Z_q^T | X) = q_{\varphi}(Z_q^0 | X) q_{\varphi}(Z_q^1 | Z_q^0, X) \ldots  q_{\varphi}(Z_q^T | Z_q^0, \ldots,Z_q^{T-1}, X)\,,
+q_{\varphi}(Z_q^0, U^0, \cdots, Z_q^T,U^T | X) = q_{\varphi}(Z_q^0,U^0 | X) q_{\varphi}(Z_q^1,U^1 | Z_q^0, U^0,X) \ldots  q_{\varphi}(Z_q^T,U^T | Z_q^{0:T-1}, U^{0:T-1}, X)\,,
 $$
-where $q_{\varphi}(Z_q^0 | Z_e) = q_{\varphi}(Z_q^0 | X)$, having $Z_e = f_\eta(X)$ similarly as in  previous sections. The model $q_{\varphi}(Z_q^t | Z_q^{t-1}, Z_e)$ gradually adds Gumble noise vectors $\mathbf{G}^t = \log(-\log(\mathcal{U}(0,1)))$:
-\begin{align*}
-	Z_q^0 &= softmax(\{- \| \rme_k - Z_e\|^2/ \tau\}_k )\,, \\
-	Z_q^t &= softmax((\mathbf{G}^t + log(Z_q^{t-1})) / \tau)\,.
-\end{align*}
+where $q_{\varphi}(Z_q^0,U^0 | Z_e) = q_{\varphi}(Z_q^0,U^0 | X)$, having $Z_e = f_\eta(X)$ similarly as in  previous sections. The model $q_{\varphi}(Z_q^t ,U^t| Z_q^{t-1},U^{t-1}, Z_e)$ gradually adds Gumbel noise vectors. Write  $\mathbf{G}^t = \log(-\log(\mathcal{U}(0,1)))$ and $U^0 = \{- \| \rme_k - Z_e\|^2/ \tau\}_k $ and 
+$$
+	Z_q^0 \sim softmax(U^0 )\,, \quad Z_q^t \sim softmax((\mathbf{G}^t +U^{t-1}) / \tau)\,,
+$$
+with $U^t = (\mathbf{G}^t +U^{t-1}) / \tau$. Using the auxiliary variational inference framework (AVI), where $u = Z_q^{1:T}$, $x = Z_q^0$ and $z = X$, we have:
+$$
+\mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi} \left[ \log\left(\frac{p_\theta(Z_q^{0:T})p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0,U^0|X) q_\varphi(Z_q^{1:T},U^{1:T}|Z_q^0,U^0)}\right) \right]\,.
+$$
+This loss can be decomposed into two terms
+$$
+\mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi} \left[\log p_\theta(Z_q^T) + \sum_{t=1}^T\log  \frac{p_\theta(Z_q^{t-1}|Z_q^t)}{q_\varphi(Z_q^{t},U^t|U^{t-1})} \right] + \mathbb{E}_{q_\varphi} \left[ \log\left(\frac{p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0|X)}\right) \right]\,.
+$$
+
+\clearpage
+\newpage
+
 This is a more appealing noise diffusion as it adds noise more gradually than the model considered in  {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}.
-\textcolor{red}{todo} see if we can express simply the reverse process $q_{\varphi}(Z_q^{t-1} | Z_q^t, Z_q^0)$.
-In this case, we use that 
+Conditioning to $X$ is equivalent to condtioning to the initial logits $- \| \rme_k - Z_e\|^2/ \tau$ which is dropped from notation for better clarity.  For ease of notation  In this case, we use that 
 $$
 q_{\varphi}(Z_q^{t-1} | Z_q^t, Z_q^0) \propto q_{\varphi}(Z_q^{t-1} | Z_q^0)q_{\varphi}(Z_q^{t} | Z_q^{t-1})
 $$
