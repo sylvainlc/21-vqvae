@@ -379,15 +379,63 @@ TO DO
 \section{Gumbel-Diffusion}
 In this section, we present an alternative to the Multinomial diffusion described in {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}, \url{https://arxiv.org/pdf/2102.05379.pdf}, namely the Gumbel-diffusion. The goal is to integrate more directly the Gumbel softmax in the model. As previously, we consider the following model:
 $$
-p_{\theta}(Z_q^0, \cdots, Z_q^T, X) = p_{\theta}(Z_q^T) p_{\theta}(Z_q^0|Z_q^1) \cdots p_{\theta}(X|Z^{0:T}_q)\,,
+p_{\theta}(Z_q^{0:T},U_q^{0:T}, X) = p_{\theta}(Z_q^T,U_q^T) \cdots p_{\theta}(Z_q^t,U_q^t|Z_q^{t-1},U_q^{t-1}) \cdots p_{\theta}(X|Z^{0:T}_q,U_q^{0:T})\,.
 $$
 We then consider the following variational familly:
 $$
-q_{\varphi}(Z_q^0, U^0, \cdots, Z_q^T,U^T | X) = q_{\varphi}(Z_q^0,U^0 | X) q_{\varphi}(Z_q^1,U^1 | Z_q^0, U^0,X) \ldots  q_{\varphi}(Z_q^T,U^T | Z_q^{0:T-1}, U^{0:T-1}, X)\,,
+q_{\varphi}(Z_q^{0:T},U_q^{0:T}| X) = q_{\varphi}(Z_q^0,U_q^0 | X) q_{\varphi}(Z_q^1,U_q^1 | Z_q^0, U_q^0,X) \ldots  q_{\varphi}(Z_q^T,U_q^T | Z_q^{0:T-1}, U_q^{0:T-1}, X)\,,
 $$
-where $q_{\varphi}(Z_q^0,U^0 | Z_e) = q_{\varphi}(Z_q^0,U^0 | X)$, having $Z_e = f_\eta(X)$ similarly as in  previous sections. The model $q_{\varphi}(Z_q^t ,U^t| Z_q^{t-1},U^{t-1}, Z_e)$ gradually adds Gumbel noise vectors. Write  $\mathbf{G}^t = \log(-\log(\mathcal{U}(0,1)))$ and $U^0 = \{- \| \rme_k - Z_e\|^2/ \tau\}_k $ and 
+where $q_{\varphi}(Z_q^0,U_q^0 | X) = q_{\varphi}(Z_q^0,U_q^0 | Z_e)$, having $Z_e = f_\eta(X)$ similarly as in  previous sections.
+The model $q_{\varphi}(Z_q^t ,U_q^t| Z_q^{t-1},U_q^{t-1}, Z_e)$ gradually adds Gaussian noise. Write $U_q^0 = \{- \| \rme_k - Z_e\|^2/ \tau\}_k $ and 
 $$
-	Z_q^0 \sim softmax(U^0 )\,, \quad Z_q^t \sim softmax((\mathbf{G}^t +U^{t-1}) / \tau)\,,
+Z_q^0 \sim softmax(U^0 )\,, \quad Z_q^t \sim softmax(\mathbf{G}^t +U^{t-1}))\,,
+$$
+with $U^t = \mathbf{G}^t +U^{t-1})$ and $\mathbf{G}^t$ a centered Gaussian random variable with variance $\sigma_t^2$. Using the auxiliary variational inference framework (AVI), where $u = Z_q^{1:T}$, $x = Z_q^0$ and $z = X$, we have:
+$$
+\mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi} \left[ \log\left(\frac{p_\theta(U_q^{0:T},Z_q^{0:T})p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0,U_q^0|X) q_\varphi(Z_q^{1:T},U_q^{1:T}|Z_q^0,U_q^0)}\right) \right]\,.
+$$
+This loss can be decomposed into two terms
+$$
+\mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi} \left[\log p_\theta(U_q^T,Z_q^T) + \sum_{t=1}^T\log  \frac{p_\theta(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^t)}{q_\varphi(Z_q^{t},U_q^t|Z_q^{t-1},U_q^{t-1})} \right] + \mathbb{E}_{q_\varphi} \left[ \log\left(\frac{p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0|X)}\right) \right]\,.
+$$
+The aim is now to replace 
+$$
+ \mathbb{E}_{q_\varphi} \left[\log  \frac{p_\theta(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^t)}{q_\varphi(Z_q^{t},U_q^t|U_q^{t-1})} \right]
+$$
+by
+$$
+\mathrm{KL}(q_\varphi(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^{t},Z_q^0,U_q^{0})\|p_\theta(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^t))\,.
+$$
+Note that, using Kalman updates, 
+\begin{align*}
+q_\varphi(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^{t},Z_q^0,U_q^{0}) &\propto q_\varphi(U_q^{t-1}|U_q^{0}) q_\varphi(Z_q^{t-1}|U_q^{t-1})q_\varphi(U_q^{t}|U_q^{t-1})\,,\\
+&= q_\varphi(Z_q^{t-1}|U_q^{t-1})\psi_{\tilde u_{t-1},\tilde \sigma_{t-1}^2}(U_q^{t-1})\,,\\
+&= softmax(Z_q^{t-1}|U_q^{t-1})\psi_{\tilde u_{t-1},\tilde \sigma_{t-1}^2}(U_q^{t-1})\,,
+\end{align*}
+where $\psi_{\tilde u^{t-1},\tilde \sigma^{2,t-1}}$ is the Gaussian probability density with mean and variance:
+$$
+\tilde u_{t-1} = \sigma_{t-1}^2\left(\frac{U_q^{0}}{\sum_{s=1}^{t-1}\sigma_s^2} + \frac{U_q^{t}}{\sigma_t^2}\right)\,,\quad \tilde \sigma_{t-1}^2 = \frac{\sigma_t^2 \sum_{s=1}^{t-1}\sigma_s^2}{\sum_{s=1}^{t}\sigma_s^2}\,.
+$$
+Therefore $p_\theta(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^t)$ can be parameterized by 
+$$
+softmax(Z_q^{t-1}|U_q^{t-1})\psi_{\hat u_{t-1},\hat \sigma_{t-1}^2}(U_q^{t-1})\,,
+$$
+where $\psi_{\hat u_{t-1},\hat \sigma_{t-1}^2}(U_q^{t-1})$ a Gaussian probability density with mean and variance:
+$$
+\hat u_{t-1} = \sigma_{t-1}^2\left(\frac{F_\theta(t,Z_q^t,U_q^t)}{\sum_{s=1}^{t-1}\sigma_s^2} + \frac{U_q^{t}}{\sigma_t^2}\right)\,,\quad \hat \sigma_{t-1}^2 = \frac{\sigma_t^2 \sum_{s=1}^{t-1}\sigma_s^2}{\sum_{s=1}^{t}\sigma_s^2}\,.
+$$
+Finally,
+$$
+\mathrm{KL}(q_\varphi(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^{t},Z_q^0,U_q^{0})\|p_\theta(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^t)) = \mathrm{KL}(\psi_{\hat u_{t-1},\hat \sigma_{t-1}^2}\|\psi_{\tilde u_{t-1},\tilde \sigma_{t-1}^2})\,.
+$$
+which is explicit as a divergence between Gaussian distributions.
+\clearpage
+\newpage
+
+
+The model $q_{\varphi}(Z_q^t ,U^t| Z_q^{t-1},U^{t-1}, Z_e)$ gradually adds Gumbel noise vectors. Write  $\mathbf{G}^t = \log(-\log(\mathcal{U}(0,1)))$ and $U^0 = \{- \| \rme_k - Z_e\|^2/ \tau\}_k $ and 
+$$
+Z_q^0 \sim softmax(U^0 )\,, \quad Z_q^t \sim softmax((\mathbf{G}^t +U^{t-1}) / \tau)\,,
 $$
 with $U^t = (\mathbf{G}^t +U^{t-1}) / \tau$. Using the auxiliary variational inference framework (AVI), where $u = Z_q^{1:T}$, $x = Z_q^0$ and $z = X$, we have:
 $$
