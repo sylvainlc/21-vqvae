@@ -376,7 +376,7 @@ TO DO
 \clearpage
 \newpage
 
-\section{Gumbel-Diffusion}
+\section{Gaussian-Diffusion}
 In this section, we present an alternative to the Multinomial diffusion described in {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}, \url{https://arxiv.org/pdf/2102.05379.pdf}, namely the Gumbel-diffusion. The goal is to integrate more directly the Gumbel softmax in the model. As previously, we consider the following model:
 $$
 p_{\theta}(Z_q^{0:T},U_q^{0:T}, X) = p_{\theta}(Z_q^T,U_q^T) \cdots p_{\theta}(Z_q^t,U_q^t|Z_q^{t-1},U_q^{t-1}) \cdots p_{\theta}(X|Z^{0:T}_q,U_q^{0:T})\,.
