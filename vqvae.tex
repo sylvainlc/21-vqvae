@@ -397,7 +397,14 @@ This loss can be decomposed into two terms
 $$
 \mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi} \left[\log p_\theta(Z_q^T) + \sum_{t=1}^T\log  \frac{p_\theta(Z_q^{t-1}|Z_q^t)}{q_\varphi(Z_q^{t},U^t|U^{t-1})} \right] + \mathbb{E}_{q_\varphi} \left[ \log\left(\frac{p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0|X)}\right) \right]\,.
 $$
-
+The aim is now to replace 
+$$
+ \mathbb{E}_{q_\varphi} \left[\log  \frac{p_\theta(Z_q^{t-1}|Z_q^t)}{q_\varphi(Z_q^{t},U^t|U^{t-1})} \right]
+$$
+by
+$$
+\mathrm{KL}(q_\varphi(Z_q^{t-1},U^{t-1}|Z_q^t,U^{t},Z_q^0,U^{0})\|p_\theta(Z_q^{t-1}|Z_q^t))
+$$
 \clearpage
 \newpage
 
