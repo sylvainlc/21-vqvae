@@ -378,9 +378,10 @@ TO DO
 
 \section{Gaussian-Diffusion}
 In this section, we present an alternative to the Multinomial diffusion described in {\em Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions, Welling et al; (2021)}, \url{https://arxiv.org/pdf/2102.05379.pdf}, namely the Gumbel-diffusion.  As previously, we consider the following model:
-$$
-p_{\theta}(Z_q^{0:T},U_q^{0:T}, X) = p_{\theta}(Z_q^T,U_q^T) \cdots p_{\theta}(Z_q^t,U_q^t|Z_q^{t-1},U_q^{t-1}) \cdots p_{\theta}(X|Z^{0:T}_q,U_q^{0:T})\,.
-$$
+\begin{align*}
+p_{\theta}(Z_q^{0:T},U_q^{0:T}, X) &= p_{\theta}(Z_q^T,U_q^T) \cdots p_{\theta}(Z_q^t,U_q^t|Z_q^{t-1},U_q^{t-1}) \cdots p_{\theta}(X|Z^{0:T}_q,U_q^{0:T})\,,\\
+&= p_{\theta}(Z_q^T,U_q^T) \left\{\prod_{t=0}^{T-1}p_{\theta}(U_q^t|U_q^{t-1})softmax(Z_q^t|U_q^t)\right\}p_{\theta}(X|Z^{0}_q)\,.
+\end{align*}
 The specific choice for the model $p_\theta$ is described below. We then consider the following variational familly:
 $$
 q_{\varphi}(Z_q^{0:T},U_q^{0:T}| X) = q_{\varphi}(Z_q^0,U_q^0 | X) q_{\varphi}(Z_q^1,U_q^1 | Z_q^0, U_q^0,X) \ldots  q_{\varphi}(Z_q^T,U_q^T | Z_q^{0:T-1}, U_q^{0:T-1}, X)\,,
