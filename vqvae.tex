@@ -386,12 +386,7 @@ The specific choice for the model $p_\theta$ is described below. We then conside
 $$
 q_{\varphi}(Z_q^{0:T},U_q^{0:T}| X) = q_{\varphi}(Z_q^0,U_q^0 | X) q_{\varphi}(Z_q^1,U_q^1 | Z_q^0, U_q^0,X) \ldots  q_{\varphi}(Z_q^T,U_q^T | Z_q^{0:T-1}, U_q^{0:T-1}, X)\,,
 $$
-where $q_{\varphi}(Z_q^0,U_q^0 | X) = q_{\varphi}(Z_q^0,U_q^0 | Z_e)$, having $Z_e = f_\eta(X)$ similarly as in  previous sections.
-The model $q_{\varphi}(Z_q^t ,U_q^t| Z_q^{t-1},U_q^{t-1}, Z_e)$ gradually adds Gaussian noise. Write $U_q^0 = \{- \| \rme_k - Z_e\|^2/ \tau\}_k $ and 
-$$
-Z_q^0 \sim softmax(U^0 )\,, \quad Z_q^t \sim softmax(\mathbf{G}^t +U_q^{t-1})\,,
-$$
-with $U_q^t = \mathbf{G}^t +U_q^{t-1}$ and $\mathbf{G}^t$ a centered Gaussian random variable with variance $\sigma_t^2$. Using the auxiliary variational inference framework (AVI), define
+where $q_{\varphi}(Z_q^0,U_q^0 | X) = q_{\varphi}(Z_q^0,U_q^0 | Z_e)$, having $Z_e = f_\eta(X)$ similarly as in  previous sections. Using the auxiliary variational inference framework (AVI), define
 $$
 \mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi} \left[ \log\left(\frac{p_\theta(U_q^{0:T},Z_q^{0:T})p_\theta(X|Z_q^0)}{q_\varphi(Z_q^0,U_q^0|X) q_\varphi(Z_q^{1:T},U_q^{1:T}|Z_q^0,U_q^0)}\right) \right]\,.
 $$
@@ -407,6 +402,13 @@ by
 $$
 \mathrm{KL}(q_\varphi(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^{t},Z_q^0,U_q^{0})\|p_\theta(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^t))\,.
 $$
+
+\subsection{Gradually add Gaussian noise}
+The model $q_{\varphi}(Z_q^t ,U_q^t| Z_q^{t-1},U_q^{t-1}, Z_e)$ gradually adds Gaussian noise. Write $U_q^0 = \{- \| \rme_k - Z_e\|^2/ \tau\}_k $ and 
+$$
+Z_q^0 \sim softmax(U_q^0 )\,, \quad Z_q^t \sim softmax(\mathbf{G}^t +U_q^{t-1})\,,
+$$
+with $U_q^t = \mathbf{G}^t +U_q^{t-1}$ and $\mathbf{G}^t$ a centered Gaussian random variable with variance $\sigma_t^2$. 
 Note that, using Kalman updates, 
 \begin{align*}
 q_\varphi(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^{t},Z_q^0,U_q^{0}) &\propto q_\varphi(U_q^{t-1}|U_q^{0}) q_\varphi(Z_q^{t-1}|U_q^{t-1})q_\varphi(U_q^{t}|U_q^{t-1})\,,\\
@@ -430,6 +432,38 @@ $$
 \mathrm{KL}(q_\varphi(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^{t},Z_q^0,U_q^{0})\|p_\theta(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^t)) = \mathrm{KL}(\psi_{\hat u_{t-1},\hat \sigma_{t-1}^2}\|\psi_{\tilde u_{t-1},\tilde \sigma_{t-1}^2})\,.
 $$
 which is explicit as a divergence between Gaussian distributions.
+
+\subsection{Gradually add Gaussian noise with mean shrinkage}
+The model $q_{\varphi}(Z_q^t ,U_q^t| Z_q^{t-1},U_q^{t-1}, Z_e)$ gradually adds Gaussian noise. Write $U_q^0 = \{- \| \rme_k - Z_e\|^2/ \tau\}_k $ and 
+$$
+Z_q^0 \sim softmax(U_q^0 )\,, \quad Z_q^t \sim softmax(U_q^t)\,,
+$$
+with $U_q^t = \mathbf{G}^t + \sqrt{1-\sigma_t^2}U_q^{t-1}$ and $\mathbf{G}^t$ a centered Gaussian random variable with variance $\sigma_t^2$. 
+Note that, using Kalman updates, 
+\begin{align*}
+q_\varphi(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^{t},Z_q^0,U_q^{0}) &\propto q_\varphi(U_q^{t-1}|U_q^{0}) q_\varphi(Z_q^{t-1}|U_q^{t-1})q_\varphi(U_q^{t}|U_q^{t-1})\,,\\
+&= q_\varphi(Z_q^{t-1}|U_q^{t-1})\psi_{\tilde u_{t-1},\tilde \sigma_{t-1}^2}(U_q^{t-1})\,,\\
+&= softmax(Z_q^{t-1}|U_q^{t-1})\psi_{\tilde u_{t-1},\tilde \sigma_{t-1}^2}(U_q^{t-1})\,,
+\end{align*}
+where $q_\varphi(U_q^{t-1}|U_q^{0})$ is the Gaussian probability density function with mean $ \sqrt{\prod_{s=1}^{t-1}(1-\sigma_s^2)}U_q^0$ and variance $1 - \prod_{s=1}^{t-1}(1-\sigma_s^2)$ and $\psi_{\tilde u^{t-1},\tilde \sigma^{2,t-1}}$ is the Gaussian probability density with mean and variance:
+$$
+\tilde u_{t-1} = \frac{\sqrt{\bar{\alpha}_{t-1}}\sigma_t^2}{1 - \bar{\alpha}_{t}}U_q^0 + \frac{\sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})}{1-\bar{\alpha}_{t}}U_q^t\,,\quad \tilde \sigma_{t-1}^2 = \frac{1 - \bar{\alpha}_{t-1}}{1 - \bar{\alpha}_{t}}\sigma_t^2\,,
+$$
+where $ \bar{\alpha}_{t} = \prod_{s=1}^{t}\alpha_s$ and $\alpha_s = 1-\sigma_s^2$. Therefore, $p_\theta(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^t)$ can be parameterized as follows:
+$$
+p_\theta(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^t) = softmax(Z_q^{t-1}|U_q^{t-1})\psi_{\hat u_{t-1},\hat \sigma_{t-1}^2}(U_q^{t-1})\,,
+$$
+where $\psi_{\hat u_{t-1},\hat \sigma_{t-1}^2}(U_q^{t-1})$ a Gaussian probability density with mean and variance:
+$$
+\hat u_{t-1} = \frac{\sqrt{\bar{\alpha}_{t-1}}\sigma_t^2}{1 - \bar{\alpha}_{t}}F_\theta(t,Z_q^t,U_q^t) + \frac{\sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})}{1-\bar{\alpha}_{t}}U_q^t \,.
+$$
+Finally,
+$$
+\mathrm{KL}(q_\varphi(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^{t},Z_q^0,U_q^{0})\|p_\theta(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^t)) = \mathrm{KL}(\psi_{\hat u_{t-1},\hat \sigma_{t-1}^2}\|\psi_{\tilde u_{t-1},\tilde \sigma_{t-1}^2})\,.
+$$
+which is explicit as a divergence between Gaussian distributions.
+
+
 \clearpage
 \newpage
 
