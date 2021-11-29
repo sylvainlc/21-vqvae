@@ -463,6 +463,29 @@ $$
 $$
 which is explicit as a divergence between Gaussian distributions.
 
+\subsection{Denoiser based on Ornstein-Uhlenbeck bridge sampling}
+\paragraph{Adding noise. }
+In the previous example the noising and denoising problem over the random variables $\{U_q^t\}_{0\leqslant t\leqslant T}$ is sensitive to the initial scaling of the distance between embedded data and codebooks. An appealing solution to avoid this problem is to normalize all the distances and use for instance spherical projection. Then, then the $q_\varphi$ may  be defined as sampling for the solution of a Stochastic Differential Equation (SDE) to add noise to the  normalized inputs. Consider for instance 
+$$
+\mathrm{d}U_t = -\theta (U_t - U_*)\mathrm{d}t + \mathrm{d}W_t
+$$
+where $U_*$ is the target state at the end of the noising process (can be chosen as 0 for the initial simulation) and $W_t$ is a standard Browian motion. We can define $q_\varphi$ by integrating this SDE along small step-sizes. In this setting, $q_\varphi(U_q^{t}|U_q^{t-1})$ is a Gaussian probability density function with mean $U_* + (U_q^{t-1}-U_*)\mathrm{e}^{-\theta \delta}$ and variance $(1-\mathrm{e}^{-2\theta\delta})/(2\theta)$ where $\delta>0$ is the step-size between $t-1$ and $t$. Asymptotically the process is a Gaussian with mean $U_*$ and variance $1/(2\theta)$ which means that the samples will fluctuate around $U_*$.
+
+\paragraph{Bridge to denoise. }
+The denoising process amounts then to sampling from the bridge associated with the SDE, i.e. sampling $U_q^s$ given $U_q^0$ and $U_q^t$ where $0<s<t$. The law of this Bridge is explicit for the Brownian diffusion and the Ornstein-Uhlenbeck diffusion. Following the same steps as in the previous section, 
+$$
+q_\varphi(U_q^{t-1}|U_q^{t},U_q^{0}) \propto q_\varphi(U_q^{t-1}|U_q^{0}) q_\varphi(U_q^{t}|U_q^{t-1})
+$$
+so that $q_\varphi(U_q^{t-1}|U_q^{t},U_q^{0})$ is a Gaussian probability density function with mean 
+$$
+\tilde \mu_{t|t-1,0} = \left(U_q^0\mathrm{e}^{-\theta\delta(t-1)} +U_*(1-\mathrm{e}^{-\theta\delta(t-1)})\right)
+$$
+and variance
+$$
+\tilde \sigma^2_{t|t-1,0} = \left(\frac{1}{(1-\mathrm{e}^{-2\theta(t-1)\delta})/(2\theta)} + \frac{\mathrm{e}^{-2\theta\delta}}{(1-\mathrm{e}^{-2\theta\delta})/(2\theta)}\right)^{-1}\,.
+$$
+
+
 
 \clearpage
 \newpage
