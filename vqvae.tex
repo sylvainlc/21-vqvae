@@ -487,6 +487,12 @@ $$
 $$
  Therefore, $p_\theta(U_q^{t-1}|U_q^t)$ can be parameterized similarly by replacing $U_q^0$ by a deep neural networks based regressor.
 
+\paragraph{Similarities with the "Ho diffusion". }
+Consider a simplified Ornstein-Uhlenbeck diffusion ($U_* = 0$, $\theta = 1$),
+$$
+\mathrm{d}U_t = -U_t\mathrm{d}t + \sqrt{2}\mathrm{d}W_t\,.
+$$
+ In this setting, $q_\varphi(U_q^{t}|U_q^{t-1})$ is a Gaussian probability density function with mean $U_q^{t-1}\mathrm{e}^{-\delta}$ and variance $(1-\mathrm{e}^{-2\delta})$ where $\delta>0$ is the step-size between $t-1$ and $t$. This is exactly the noise process proposed by Ho et al. with $\sigma^2_t = 1 - \mathrm{e}^{-2\delta}$. It is enough to choose a step-size $\delta$ depending on  $t$ to recover exactly their noise process.
 
 \clearpage
 \newpage
