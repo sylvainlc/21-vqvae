@@ -219,6 +219,82 @@
 
 \end{abstract}
 
+\section{Introduction}
+\section{Related works}
+\section{Bridge sampling quantizers}
+ Let $X = (X^1,\ldots,X^n)$ be the observations in $\rset^D$.  It is assumed that the distribution of $X$ depends on a hidden sequence of discrete states taking values in $\{1,\ldots,K\}$ through  embedding vectors $(\rme^1,\ldots,\rme^K)$ in $\rset^m$. In this paper, we introduce a diffusion-based generative models as such  models have recently shown striking results in image generation. Consider the following model.
+\begin{align*}
+p_{\theta}(Z_q^{0:T},U_q^{0:T}, X) &= p_{\theta}(Z_q^T,U_q^T) \left\{\prod_{t=0}^{T-1}p_{\theta}(Z_q^t,U_q^t|Z_q^{t+1},U_q^{t+1})\right\}  p_{\theta}(X|Z^{0:T}_q,U_q^{0:T})\,,\\
+&= p_{\theta}(U_q^T) p_\theta(Z_q^T|U_q^T)\left\{\prod_{t=0}^{T-1}p_{\theta}(U_q^t|U_q^{t+1})p_\theta(Z_q^t|U_q^t)\right\}p_{\theta}(X|Z^{0}_q)\,.
+\end{align*}
+In this setting, $\{U_q^t\}_{T\leqslant t\leqslant 0}$ is the continuous latent state solution to a Stochastic Differenctial Equation (SDE) and conditionally on $\{U_q^t\}_{T\leqslant t\leqslant 0}$ the $\{Z_q^t\}_{T\leqslant t\leqslant 0}$ are independent with discrete distribution with support $(\rme^1,\ldots,\rme^K)$.  The prior distribution of  $U_q^T$ is assumed to be uninformative and this is the denoising process which provides the final latent state $Z_q^0$ which is used in the decoder, i.e. the conditional law of $X$ given the latent states. 
+Most approaches \cite{} using diffusion probabilistic models for $\{U_q^t\}_{T\leqslant t\leqslant 0}$ are based on a fixed diffusion process. A notable exception is \cite{} where the authors learned a Gaussian diffusion process. This specific choice was motivated by the design of the generative model which required to "invert" the diffusion process, i.e. to sample from a bridge associated with the SDE, which is explicit only for very few classes of diffusion.
+
+As the conditional law $p_{\theta}(Z_q^{0:T},U_q^{0:T}| X)$ is not available explicitly, we consider a variational approach to approximate it. Consider first an encoding function $f_\eta$ and write $Z_\rme= f_\eta(X)$. Then, consider the following variational familly:
+$$
+q_{\varphi}(Z_q^{0:T},U_q^{0:T}| X) = q_{\varphi}(U_q^0 | Z_\rme)q_{\varphi}(Z_q^0|U_q^0) \prod_{t=1}^T\left\{ q_{\varphi}(U_q^t|U_q^{t-1})q_{\varphi}(Z_q^t|U_q^t)\right\}\,.
+$$
+Using the auxiliary variational inference framework (AVI) and following \cite{}, define the loss function:
+$$
+\mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi} \left[ \log p_\theta(U_q^{0},Z_q^{0}|U_q^{0},Z_q^{0}) - \sum_{t=1}^{T}\mathrm{KL}(q_\varphi(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^{t},Z_q^0,U_q^{0})\|p_\theta(Z_q^{t-1},U_q^{t-1}|Z_q^t,U_q^t)) \right]\,.
+$$
+In our case, this loss reduces to
+$$
+\mathcal{L}(\theta, \varphi) = \mathbb{E}_{q_\varphi} \left[ \log p_\theta(U_q^{0},Z_q^{0}|U_q^{0},Z_q^{0}) - \sum_{t=1}^{T}\mathrm{KL}(q_\varphi(U_q^{t-1}|U_q^{t},U_q^{0})\|p_\theta(U_q^{t-1}|U_q^t)) \right]\,.
+$$
+Bridge sampling quantizers then proceed as follows.
+\begin{enumerate}
+\item Define the noising transition density $q_\varphi(U_q^{t}|U_q^{t-1})$ as the transition density of a SDE.
+\item Compute the bridge sampler $q_\varphi(U_q^{t-1}|U_q^{t},U_q^{0})$ or approximate it using Monte Carlo simulation and/or discretization schemes (see next session).
+\item Define $p_\theta(U_q^{t-1}|U_q^t)$ as $q_\varphi(U_q^{t-1}|U_q^{t},U_q^{0})_{|U_q^{0} = g_\theta(U_q^t)}$ where $g_\theta$ is XXX.
+\end{enumerate}
+\section{Denoiser based on bridge sampling}
+
+\subsection{Application to Langevin diffusions}
+Let $\pi$ be a probability distribution function with respect to the Lebesgue measure such that $\pi \propto \mathrm{exp}(-G)$ where $G$ is continuously differentiable.
+We consider a sampling method based on the Euler discretization of the overdamped Langevin
+stochastic differential equation (SDE):
+$$
+\mathrm{d}U_t = -\nabla G(U_t)\mathrm{d}t + \sqrt{2}\mathrm{d}W_t\,.
+$$
+Under standard assumptions, see \cite{}, the convergence to $\pi$ holds at geometric rate. 
+
+\subsection{Application to Ornstein-Uhlenbeck bridges}
+\paragraph{Adding noise. }
+In the previous example the noising and denoising problem over the random variables $\{U_q^t\}_{0\leqslant t\leqslant T}$ is sensitive to the initial scaling of the distance between embedded data and codebooks. An appealing solution to avoid this problem is to normalize all the distances and use for instance spherical projection. Then, then the $q_\varphi$ may  be defined as sampling for the solution of a Stochastic Differential Equation (SDE) to add noise to the  normalized inputs. Consider for instance 
+$$
+\mathrm{d}U_t = -\theta (U_t - U_*)\mathrm{d}t + \sigma\mathrm{d}W_t
+$$
+where $U_*$ is the target state at the end of the noising process (can be chosen as 0 for the initial simulation) and $W_t$ is a standard Browian motion. We can define $q_\varphi$ by integrating this SDE along small step-sizes. In this setting, $q_\varphi(U_q^{t}|U_q^{t-1})$ is a Gaussian probability density function with mean $U_* + (U_q^{t-1}-U_*)\mathrm{e}^{-\theta \delta}$ and variance $\sigma^2(1-\mathrm{e}^{-2\theta\delta})/(2\theta)$ where $\delta>0$ is the step-size between $t-1$ and $t$. Asymptotically the process is a Gaussian with mean $U_*$ and variance $1/(2\theta)$ which means that the samples will fluctuate around $U_*$.
+
+\paragraph{Bridge to denoise. }
+The denoising process amounts then to sampling from the bridge associated with the SDE, i.e. sampling $U_q^s$ given $U_q^0$ and $U_q^t$ where $0<s<t$. The law of this Bridge is explicit for the Brownian diffusion and the Ornstein-Uhlenbeck diffusion. Write for all $s>0$, $v_s = \sigma^2(1-\mathrm{e}^{-2\theta\delta s})/(2\theta)$.
+Following the same steps as in the previous section, 
+$$
+q_\varphi(U_q^{t-1}|U_q^{t},U_q^{0}) \propto q_\varphi(U_q^{t-1}|U_q^{0}) q_\varphi(U_q^{t}|U_q^{t-1})
+$$
+so that $q_\varphi(U_q^{t-1}|U_q^{t},U_q^{0})$ is a Gaussian probability density function with mean 
+$$
+\tilde \mu_{t|t-1,0} = \frac{\sigma^2_{t|t-1,0}}{v_{t-1}}\left(U_q^0\mathrm{e}^{-\theta\delta(t-1)} +U_*(1-\mathrm{e}^{-\theta\delta(t-1)})\right) + \frac{\sigma^2_{t|t-1,0}}{v_{1}}\mathrm{e}^{-\theta\delta}\left(U_q^t - U_*(1 - \mathrm{e}^{-\theta\delta} )\right)
+$$
+and variance
+$$
+\tilde \sigma^2_{t|t-1,0} = \left(\frac{1}{v_{t-1}} + \frac{\mathrm{e}^{-2\theta\delta}}{v_1}\right)^{-1}\,.
+$$
+ Therefore, $p_\theta(U_q^{t-1}|U_q^t)$ can be parameterized similarly by replacing $U_q^0$ by a deep neural networks based regressor.
+
+\paragraph{Similarities with the "Ho diffusion". }
+Consider a simplified Ornstein-Uhlenbeck diffusion ($U_* = 0$, $\theta = 1$),
+$$
+\mathrm{d}U_t = -U_t\mathrm{d}t + \sqrt{2}\mathrm{d}W_t\,.
+$$
+ In this setting, $q_\varphi(U_q^{t}|U_q^{t-1})$ is a Gaussian probability density function with mean $U_q^{t-1}\mathrm{e}^{-\delta}$ and variance $(1-\mathrm{e}^{-2\delta})$ where $\delta>0$ is the step-size between $t-1$ and $t$. This is exactly the noise process proposed by Ho et al. with $\sigma^2_t = 1 - \mathrm{e}^{-2\delta}$. It is enough to choose a step-size $\delta$ depending on  $t$ to recover exactly their noise process.
+
+\subsection{Application to other bridges}
+
+
+\clearpage
+\newpage
 
 \section{First Experiments}
 First experiments were focused on baselines on images and a few timeseries. \footnote{List of experiments \& datasets to validate the new approach and compare to vq-vae \url{https://docs.google.com/document/d/1a7lhplsBraTD3qmvsHXdoPmQj00YijT2XMWpHEFeb58/edit}}
