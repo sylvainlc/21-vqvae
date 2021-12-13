@@ -222,7 +222,9 @@
 \section{Introduction}
 \section{Related works}
 \section{Bridge sampling quantizers}
- Let $X = (X^1,\ldots,X^n)$ be the observations in $\rset^D$.  It is assumed that the distribution of $X$ depends on a hidden sequence of discrete states taking values in $\{1,\ldots,K\}$ through  embedding vectors $(\rme^1,\ldots,\rme^K)$ in $\rset^m$. In this paper, we introduce a diffusion-based generative models as such  models have recently shown striking results in image generation. Consider the following model.
+ Let $X = (X^1,\ldots,X^n)$ be the observations in $\rset^D$.  It is assumed that the distribution of $X$ depends on a hidden sequence of discrete states taking values in $\{1,\ldots,K\}$ through  embedding vectors $(\rme^1,\ldots,\rme^K)$ in $\rset^m$. In  \cite{oord2017neural}, the authors proposed the Vector Quantised Variational AutoEncoder (VQ-VAE) in which  the encoder network outputs discrete states written $Z_q$ using a continuous endoding vector $Z_e$ mapped onto the nearest element in $(\rme^1,\ldots,\rme^K)$. This approach  does not suffer from usual posterior collapse in VAE setting but invovles many practical tricks and still suffer from serious limitations, see \cite{}.
+
+In this paper, we introduce a diffusion-based generative VQ-VAE. This model allows to propose a VAE approach with an efficient joint training of the prior and the variational approximation. Diffusion-based generative models have recently shown striking results in image generation and can be used in our setting to define a noising/denoising process in a continuous state space to sample sequences of discrete representations. Consider the following model.
 $$
 p_{\theta}(Z_q^{0:T},U_q^{0:T}, X) %&= p_{\theta,T}(Z_q^T,U_q^T) \left\{\prod_{t=0}^{T-1}p_{\theta,t}(Z_q^t,U_q^t|Z_q^{t+1},U_q^{t+1})\right\}  p_{\theta,0}(X|Z^{0:T}_q,U_q^{0:T})\,,\\
 = p^u_{\theta,T}(U_q^T) p^z_{\theta,T}(Z_q^T|U_q^T)\left\{\prod_{t=0}^{T-1}p^u_{\theta,t}(U_q^t|U_q^{t+1})p^z_{\theta,t}(Z_q^t|U_q^t)\right\}p^x_{\theta,0}(X|Z^{0}_q)\,.
@@ -258,7 +260,7 @@ stochastic differential equation (SDE):
 $$
 \mathrm{d}U_t = -\nabla G(U_t)\mathrm{d}t + \sqrt{2}\mathrm{d}W_t\,.
 $$
-Under standard assumptions, see \cite{}, the convergence to $\pi$ holds at geometric rate.
+Under standard assumptions, see \cite{}, the convergence to $\pi$ holds at geometric rate. In this case, $\pi$ is the equilibrium distribution, and our model will target this distribution as initial law of $U_q^T$
 
 \subsection{Application to Ornstein-Uhlenbeck bridges}
 \paragraph{Adding noise. }
@@ -338,6 +340,13 @@ $$
 \end{itemize}
 
 \subsection{Experiments with a VQ-VAE}
+
+
+
+\bibliographystyle{apalike}
+\bibliography{vqvae}
+
+
 
 \clearpage
 \newpage
@@ -933,8 +942,7 @@ where $\omega^{\ell}_{z,k+1|n} = \sum_{m=1}^K\omega^{\ell,m}_{z,k+1,k+2|n}$.
 \end{enumerate}
 
 \subsection{Training algorithm}
-%\bibliographystyle{apalike}
-%\bibliography{vqvae}
+
 
 
 \end{document}
