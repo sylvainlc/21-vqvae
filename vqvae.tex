@@ -350,6 +350,18 @@ $$
 
 \subsection{Experiments with a VQ-VAE}
 
+Start with an arbitrary dataset, in practice with small dimensionality, such as CIFAR.
+\begin{enumerate}
+	\item Train a VQ-VAE to produce codebooks. We should check:
+		\begin{itemize}
+			\item Reconstruction cost is low
+			\item Reconstructions are visually pleasing
+			\item Codebook usage is tolerable
+		\end{itemize}
+	\item Run a couple of diffusion methods (for instance Ours, PixelCNN and Microsoft) on these codebooks
+	\item Compare
+\end{enumerate}
+
 
 
 \bibliographystyle{apalike}
