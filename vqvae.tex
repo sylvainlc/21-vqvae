@@ -332,11 +332,12 @@ $$
 			\item Sample a single point from the uniform/gaussian distribution with mean $0_m$, run multiple denoising bridge, compare diversity;
 		\end{itemize}
 	\item efficiency when sampling
-		\item Sanity check:
-			\begin{itemize}
-				\item Check that step size during denoising remains small ;
-				\item Check that estimation $\tilde U_0$ is \textit{regular}.
-			\end{itemize}
+	\item Distribution compared to original dataset (KL to uniform, histogram of specific pixels)
+	\item Sanity check:
+		\begin{itemize}
+			\item Check that step size during denoising remains small ;
+			\item Check that estimation $\tilde U_0$ is \textit{regular} when $t : T \rightarrow 0$.
+		\end{itemize}
 \end{itemize}
 
 \paragraph{Dataset} We could use the following toy datasets:
