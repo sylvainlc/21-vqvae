@@ -325,9 +325,18 @@ $$
 
 \paragraph{Evaluation} We study the dynamics of the noising and denoising process, and compare the efficiency of the methods through:
 \begin{itemize}
-	\item reconstruction error (crossentropy)
-	\item diversity when sampling
+	\item reconstruction error (crossentropy) (Start with dataset sample $U_0$, run noising bridge to get $U_T$, then denoising yielding $\hat U_0$. Compare $\hat U_0$ with original $U_0$.)
+	\item diversity when sampling:
+		\begin{itemize}
+			\item Sample multiple $U_T$ from the uniform/gaussian distribution with mean $0_m$, run the denoising bridge for each, compare diversity of resulting vectors ;
+			\item Sample a single point from the uniform/gaussian distribution with mean $0_m$, run multiple denoising bridge, compare diversity;
+		\end{itemize}
 	\item efficiency when sampling
+		\item Sanity check:
+			\begin{itemize}
+				\item Check that step size during denoising remains small ;
+				\item Check that estimation $\tilde U_0$ is \textit{regular}.
+			\end{itemize}
 \end{itemize}
 
 \paragraph{Dataset} We could use the following toy datasets:
