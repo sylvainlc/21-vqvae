@@ -332,13 +332,32 @@ $$
 			\item Sample a single point from the uniform/gaussian distribution with mean $0_m$, run multiple denoising bridge, compare diversity;
 		\end{itemize}
 	\item efficiency when sampling
-	\item Distribution compared to original dataset (KL to uniform, histogram of specific pixels)
+	\item Distribution compared to original dataset (KL to uniform, histogram of specific pixels).
+We aim at highlighting the difference between the empirical distribution of the CIFAR dataset, and the distribution induced by samples of the PixelCNN prior.
+For this task, we draw as many samples from the prior as elements in the dataset (50,000 in the case of CIFAR), and compute the pointwise KL divergence.
+The results are displayed in the form of a heatmap, for the red channel, in Figure~\ref{fig:compare_distro_kl_pixelcnn}.
+In order to get a more qualitative comparison, we also plot the empirical distribution of both original and sampled dataset for a single pixel, for the same channel.
+Results are presented in Figure~\ref{fig:compare_distro_hist_pixelcnn}.
 	\item Sanity check:
 		\begin{itemize}
 			\item Check that step size during denoising remains small ;
 			\item Check that estimation $\tilde U_0$ is \textit{regular} when $t : T \rightarrow 0$.
 		\end{itemize}
 \end{itemize}
+
+\begin{figure}[htpb]
+	\centering
+	\includegraphics[width=0.6\linewidth]{images/compare_distro_kl_pixelcnn.jpg}
+	\caption{}%
+	\label{fig:compare_distro_kl_pixelcnn}
+\end{figure}
+
+\begin{figure}[htpb]
+	\centering
+	\includegraphics[width=\linewidth]{images/compare_distro_hist_pixelcnn.jpg}
+	\caption{}%
+	\label{fig:compare_distro_hist_pixelcnn}
+\end{figure}
 
 \paragraph{Dataset} We could use the following toy datasets:
 
