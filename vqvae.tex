@@ -297,11 +297,11 @@ $$
 
 \subsection{Experiments on toy problems}
 
-Consider a dataset of $N$ discrete vectors: $X \in {1,...K}^d$ where K is an integer (i.e. size of a codebook or vocabulary) and $d$ the dimension of the vector. The dimensions of the vector are not independant (i.e. integer pixel values in a picture).
+Consider a dataset of $N$ discrete vectors: $X \in \{1,\ldots,K\}^d$ where K is an integer (i.e. size of a codebook or vocabulary) and $d$ the dimension of the vector. The dimensions of the vector are not independent (i.e. integer pixel values in a picture).
 
 A discrete diffusion process such as [Welling] would slowly add noise in the discrete vectors, by replacing a random coordinate of the vector by a uniform integer [Welling] or a mask [Microsoft, Structured denoising diffusion models in discrete state-spaces].
 
-We propose instead to associate with each of the $K$ code an embedding $\{e_k\}_{1 \leq k \leq K}$ continuous vector of dimension $m$ and normalized: $e_k$ is on the unit sphere. This embedding projection is random. We denote $E(X) \in \rset^{d \times m}$ the continuous embedding projection of vector $X$
+We propose instead to associate with each of the $K$ codes an embedding $e_k$, a continuous and normalized vector of dimension $m$: $e_k$ is on the unit sphere. This embedding projection is random. We denote by $E(X) \in \rset^{d \times m}$ the continuous embedding projection of vector $X$
 
 In this setting, we apply a simple diffusion bridge as described previously, with $U_0 = E(X)$:
 $$
