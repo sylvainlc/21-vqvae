@@ -335,9 +335,10 @@ $$
 	\item Distribution compared to original dataset (KL to uniform, histogram of specific pixels).
 We aim at highlighting the difference between the empirical distribution of the CIFAR dataset, and the distribution induced by samples of the PixelCNN prior.
 For this task, we draw as many samples from the prior as elements in the dataset (50,000 in the case of CIFAR), and compute the pointwise KL divergence.
-The results are displayed in the form of a heatmap, for the red channel, in Figure~\ref{fig:compare_distro_kl_pixelcnn}.
+The results are displayed in the form of a heatmap, in Figure~\ref{fig:compare_distro_kl_pixelcnn}.
+\textit{Note for the guys: this only makes sens if we compare it to the KL map between CIFAR and our prior, were the KL distances are hopefully lower and equal along the image.}
 In order to get a more qualitative comparison, we also plot the empirical distribution of both original and sampled dataset for a single pixel, for the same channel.
-Results are presented in Figure~\ref{fig:compare_distro_hist_pixelcnn}.
+Results are presented in Figure~\ref{fig:compare_distro_hist_pixelcnn}, and show the induced distribution from the PixelCNN in much less regular as the original dataset.
 	\item Sanity check:
 		\begin{itemize}
 			\item Check that step size during denoising remains small ;
@@ -348,14 +349,16 @@ Results are presented in Figure~\ref{fig:compare_distro_hist_pixelcnn}.
 \begin{figure}[htpb]
 	\centering
 	\includegraphics[width=0.6\linewidth]{images/compare_distro_kl_pixelcnn.jpg}
-	\caption{}%
+	\caption{Pointwise KL divergence between the CIFAR dataset and the distribution sampled from the PixelCNN prior.
+We drew as many samples from the prior as elements in the dataset (50,000 in the case of CIFAR), and compute the KL divergence for each pixel in the images.
+The results are displayed in the form of a heatmap, for the red channel.}
 	\label{fig:compare_distro_kl_pixelcnn}
 \end{figure}
 
 \begin{figure}[htpb]
 	\centering
 	\includegraphics[width=\linewidth]{images/compare_distro_hist_pixelcnn.jpg}
-	\caption{}%
+	\caption{Empirical distributions of a single pixel, in the middle of the images, for the CIFAR dataset and the distribution sampled from the Pixel CNN prior.}
 	\label{fig:compare_distro_hist_pixelcnn}
 \end{figure}
 
