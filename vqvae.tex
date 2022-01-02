@@ -222,18 +222,34 @@
 \section{Introduction}
 
 \section{Related works}
+\paragraph{VQ-VAE: applications and limits.}
 \begin{itemize}
 \item \cite{oord2017neural}: seminal paper on quantization based on  variational autoencoders. Introduced the  Vector QuantisedVariational AutoEncoder (VQ-VAE), which differs from traditional VAEs since the
 encoder network outputs discrete latent vectors; and the prior is trained during a specific finely tuned step.  The discrete latent variables are drawn in a finite set $\mathcal{E} = \{\rme_1,\ldots,\rme_K\}$, $K\geq 1$,  This selected vector is then fed to a standard decoder. The overall procedure contains two main weaknesses. The first weakness lies in the learning procedure as no gradient can be computed fo the quantization step so that the authors propose an approximation using stopgradient and additional regularization penalties in the loss function which cannot be rigorously justified. On the other hand, the prior distribution over the discrete latent states is first assumed to be uniform during the training of the other parameters of the model. Then, in a second step, a prior distribution is fit using autoregressive models. The authors proposed the very high-dimensional models PixelCNN and WaveNet in this step. This two-step training also hardly justified, etc.
 
 Influence of ther prior further explored in \cite{razavi2019generating} where VQ-VAE are used to sample large scale images.
-\item \cite{hoogeboom2021argmax}:  the authors proposed a multinomial diffusion to gradually add
-categorical noise.
 \item
+\item
+\item
+\item \cite{willetts:2021}: hierarchical discrete variational autoencoders with numerous layers of latent variables.
+\end{itemize}
+\paragraph{Generative denoising.}
+\begin{itemize}
+\item \cite{hoogeboom2021argmax}:  the authors proposed a multinomial diffusion to gradually add
+categorical noise to discrete samples from the dataset. The process gradually destroys the information carried by the initial sample such that at the final sampling step of the diffusion, samples  carry almost no information about the initial distribution.
+Contrary to alternatives such as normalizing flows, the diffusion proposed by the authors for
+discrete variables does not require gradient approximations as the parameter of the diffusion is fixed.
+
+ Such diffusion models are optimized using variational inference to learn the denoising process, i.e. the backward kernel which aims at inverting the multinomial diffusion. In \cite{hoogeboom2021argmax}, the authors proposed a variational distribution based on bridge sampling i.e. sampling conditionally on the initial samples. Major weakness here as if the model $p_{\theta}$ is assumed to be Markovian, the process which evolves backward in time  is also Markov chain...
+\item \cite{de2021simulating}:
 \item
 \item
 \item
 \end{itemize}
+
+\paragraph{Our work: generative denoising to learn prior in a VQ-VAE framework.}
+
+
 \section{Bridge sampling quantizers}
  Let $X = (X^1,\ldots,X^n)$ be the observations in $\rset^D$.  It is assumed that the distribution of $X$ depends on a hidden sequence of discrete states taking values in $\{1,\ldots,K\}$ through  embedding vectors $(\rme^1,\ldots,\rme^K)$ in $\rset^m$. In  \cite{oord2017neural}, the authors proposed the Vector Quantised Variational AutoEncoder (VQ-VAE) in which  the encoder network outputs discrete states written $Z_q$ using a continuous endoding vector $Z_e$ mapped onto the nearest element in $(\rme^1,\ldots,\rme^K)$. This approach  does not suffer from usual posterior collapse in VAE setting but invovles many practical tricks and still suffer from serious limitations, see \cite{}.
 
