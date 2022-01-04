@@ -223,29 +223,45 @@
 
 \section{Related works}
 \paragraph{VQ-VAE: applications and limits.}
-\begin{itemize}
-\item \cite{oord2017neural}: seminal paper on quantization based on  variational autoencoders. Introduced the  Vector QuantisedVariational AutoEncoder (VQ-VAE), which differs from traditional VAEs since the
-encoder network outputs discrete latent vectors; and the prior is trained during a specific finely tuned step.  The discrete latent variables are drawn in a finite set $\mathcal{E} = \{\rme_1,\ldots,\rme_K\}$, $K\geq 1$,  This selected vector is then fed to a standard decoder. The overall procedure contains two main weaknesses. The first weakness lies in the learning procedure as no gradient can be computed fo the quantization step so that the authors propose an approximation using stopgradient and additional regularization penalties in the loss function which cannot be rigorously justified. On the other hand, the prior distribution over the discrete latent states is first assumed to be uniform during the training of the other parameters of the model. Then, in a second step, a prior distribution is fit using autoregressive models. The authors proposed the very high-dimensional models PixelCNN and WaveNet in this step. This two-step training also hardly justified, etc.
+\cite{oord2017neural}: seminal paper on quantization based on  variational autoencoders. Introduced the  Vector QuantisedVariational AutoEncoder (VQ-VAE), which differs from traditional VAEs since the
+encoder network outputs discrete latent vectors; and the prior is trained during a specific finely tuned step. The discrete latent variables are drawn in a finite set $\mathcal{E} = \{\rme_1,\ldots,\rme_K\}$, $K\geq 1$, This selected vector is then fed to a standard decoder. While the quality of the generated samples are significantly better than a standard VAE, the overall procedure contains two main weaknesses. The first weakness lies in the learning procedure as no gradient can be computed fo the quantization step so that the authors propose an approximation using stopgradient and additional regularization penalties in the loss function which cannot be rigorously justified. On the other hand, the prior distribution over the discrete latent states is first assumed to be uniform during the training of the other parameters of the model. Then, in a second step, a prior distribution is fit using autoregressive models. This two-step training procedure is hardly justified, but enable the authors to propose high-dimensional models PixelCNN and WaveNet which training procedure is well mastered. Note that for pictures, the discrete latent of a VQ-VAE is typically organized as a 2D grid.
 
-Influence of ther prior further explored in \cite{razavi2019generating} where VQ-VAE are used to sample large scale images.
-\item
-\item
-\item
-\item \cite{willetts:2021}: hierarchical discrete variational autoencoders with numerous layers of latent variables.
-\end{itemize}
-\paragraph{Generative denoising.}
+An autoregressive pixelCNN prior model has several drawbacks (which are the same in pixel space or latent space):
 \begin{itemize}
-\item \cite{hoogeboom2021argmax}:  the authors proposed a multinomial diffusion to gradually add
+	\item it assumes the data has a fixed sequential order, which has forces the generation to start from the top left corner and span the image/2D latent grid in an arbitrary way.
+	\item At each step, a new pixel/latent is sampled using previously sampled pixels/latents. Prediction errors may then accumulate at inference, while during training the ground truth is provided at each step (“teacher-forcing”).
+	\item Therefore runtime process sequential and dependant on the size of the image/2D latent grid, which can become very large for high dimensional objets.
+\end{itemize}
+
+The influence of the prior is further explored in \cite{razavi2019generating} where VQ-VAE are used to sample larger scale images, using a hierarchical discrete latent, and later \cite{willetts:2021} use hierarchical discrete variational autoencoders with numerous layers of latent variables. Other works such as \cite{esser2021taming} have used transformers to model autoregressively a sequence of latents, and therefore suffers from the same drawbacks as pixelCNN-like priors.
+
+\paragraph{Generative denoising.}
+A promising class of models to depart from autoregressive models are generative denoising models. They have recently recieved a lot of attention in the context of continuous modelling.
+
+\begin{itemize}
+	\item Ho et al
+	\item other major diffusion works
+	\item \cite{de2021simulating}
+\end{itemize}
+
+\paragraph{Discrete Generative denoising.}
+\cite{hoogeboom2021argmax}:  the authors proposed a multinomial diffusion to gradually add
 categorical noise to discrete samples from the dataset. The process gradually destroys the information carried by the initial sample such that at the final sampling step of the diffusion, samples  carry almost no information about the initial distribution.
 Contrary to alternatives such as normalizing flows, the diffusion proposed by the authors for
 discrete variables does not require gradient approximations as the parameter of the diffusion is fixed.
 
  Such diffusion models are optimized using variational inference to learn the denoising process, i.e. the backward kernel which aims at inverting the multinomial diffusion. In \cite{hoogeboom2021argmax}, the authors proposed a variational distribution based on bridge sampling i.e. sampling conditionally on the initial samples. Major weakness here as if the model $p_{\theta}$ is assumed to be Markovian, the process which evolves backward in time  is also Markov chain...
-\item \cite{de2021simulating}:
-\item
-\item
-\item
+
+In \cite{austin2021structured}, the authors improve the idea by modifying the corruption scheme transition matrices with one of the following ideas:
+\begin{itemize}
+	\item adding absorbing states in the corrupting scheme, by adding replacing a discrete value by a MASK class, inspired by recent Masked Language Models such as BERT. This allows corrupted dimensions to be distinguished from original ones rather than sampled uniformly.
+	\item using transition matrices that mimic Gaussian kernels in continuous space imitating a continuous space diffusion model by using a discretized, truncated Gaussian distribution. This assumes, however, that there is a natural order of the dimensions, which is not the case in our latent space.
+	\item introducing a corruption based on nearest neighbors in embedding space, using pretrained embeddings of discrete categories. This scheme was designed to be used with token embeddings such as pretrained word embeddings, and does not apply in our case.
 \end{itemize}
+
+\paragraph{Using Generative denoising in discrete latent space}
+
+In the recent \cite{gu2021vector}, the authors have tried to replace the autoregressive prior with discrete generative denoising. However, they rather focus on a text-to-image synthesis task, in which the generative denoising model is trained conditioned on an input text: it produces a set of discrete visual tokens given a sequence of textual tokens.
 
 \paragraph{Our work: generative denoising to learn prior in a VQ-VAE framework.}
 
