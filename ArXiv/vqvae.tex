@@ -83,7 +83,7 @@ An autoregressive pixelCNN prior model has several drawbacks, which are the same
 Figure~\ref{fig:archi} describes the complete architecture of our model.
 \begin{figure}[h]
     \centering
-    \includegraphics[width=.8\linewidth]{images/Archi.png}
+    \includegraphics[width=.8\linewidth]{Archi.png}
     \caption{Our proposed architecture, for a prior based on a Ornstein-Uhlenbeck bridge. The top pathway from \textit{input image} to $\latentcont^0$, to $\latentdis^0$, to \textit{reconstructed image} resembles the original VQ-VAE model. The vertical pathway from $(\latentcont^0, \latentdis^0)$ to $(\latentcont^T, \latentdis^T)$ and backwards is based on a denoising diffusion process. See Section~\ref{sec:OU} and Algorithm~\ref{alg:sample} for the corresponding sampling procedure.}
     \label{fig:archi}
 \end{figure}
@@ -302,7 +302,7 @@ In order to understand the proposed denoising procedure for VQ-VAE, consider a s
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.45]{images/centroids2.png}
+    \includegraphics[scale=0.45]{centroids2.png}
     \caption{Toy dataset, with $K=8$ centroids, and two samples $x = (x_1,x_2,x_3,x_4,x_5)$ in $\rset^{2 \times 5}$ each displayed as $5$ points in $\rset^{2}$ (blue and red points), corresponding to the discrete sequences (red) $(6,5,4,3,2)$ and (blue) $(7,0,1,0,1)$.}
     \label{fig:toydata}
 \end{figure}
@@ -311,7 +311,7 @@ We train our bridge procedure with $T=50$ timesteps, $\vartheta=2, \eta=0.1$, ot
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.4]{images/noisedenoise2.png}
+    \includegraphics[scale=0.4]{noisedenoise2.png}
     \caption{(Left) Forward noise process for one sample. First, one data is drawn ($\latentcont^0(x) =x$ in the toy example)  and then $\{\latentcont^t\}_{1\leq t \leq T}$ are sampled under $q_\varphi$ and displayed. 
     (Right) Reverse process for one sample $\latentcont^T\sim  \mathcal{N}(0, (2\vartheta)^{-1}\eta^2 \mathbf{I}_{dN})$. As expected, the last sample $\latentcont^0$ reaches the neighborhood of $5$ codebooks.}
     \label{fig:noisedenoise}
@@ -396,13 +396,13 @@ and samples from our prior in Figure \ref{fig:diffusion_samples}. Additional sam
 
 \begin{subfigure}{\linewidth}
     \centering
-    \includegraphics[width=.8\linewidth]{images/ours/samples2.png}
+    \includegraphics[width=.8\linewidth]{samples2.png}
     \caption{Samples from our diffusion prior.}
     \label{fig:diffusion_samples}
 \end{subfigure}
 \begin{subfigure}{\linewidth}
     \centering
-    \includegraphics[width=.8\linewidth]{images/ours/pixel_samples.png}
+    \includegraphics[width=.8\linewidth]{pixel_samples.png}
     \caption{Samples from the PixelCNN prior.}
     \label{fig:pixel_samples}
 \end{subfigure}
@@ -419,7 +419,7 @@ a specific conditioning order. Additional conditional sampling experiments are g
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{images/ours/cond_samples_center_2.png}
+    \includegraphics[width=.8\linewidth]{cond_samples_center_2.png}
 
     \caption{Conditional sampling with centered mask: for each of the 3 different images, samples from our diffusion are on top and from PixelCNN on the bottom. For each row: the image on the left is the VQVAE masked reconstruction, the image on the right is the full VQ-VAE reconstruction. Images in-between are independent conditional samples from the models.}
     \label{fig:miniimagenet_prior_ours_conditional}
@@ -428,7 +428,7 @@ a specific conditioning order. Additional conditional sampling experiments are g
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{images/ours/cond_samples_topleft.png}
+    \includegraphics[width=.8\linewidth]{cond_samples_topleft.png}
 
     \caption{Conditional sampling with top left mask: for each of the 3 different images, samples from our diffusion are on top and from PixelCNN on the bottom. For each row: the image on the left is the VQVAE masked reconstruction, the image on the right is the full VQ-VAE reconstruction. Images in-between are independent conditional samples from the models.}
     \label{fig:miniimagenet_prior_ours_conditional:topleft}
@@ -440,7 +440,7 @@ In addition to the conditional samples, Figure~\ref{fig:miniimagenet_prior_ours_
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{images/ours/chains2.png}
+    \includegraphics[width=.8\linewidth]{chains2.png}
     \caption{Sampling denoising chain from $t=500$ up to $t=0$, shown at regular intervals, conditioned on the outer part of the picture. We show only the last $500$ steps of this process, as the first $500$ steps are not visually informative. The sampling procedure is described in Appendix~\ref{ap:inpainting}.}
     \label{fig:miniimagenet_prior_ours_chain}
 \end{figure}
@@ -448,7 +448,7 @@ In addition to the conditional samples, Figure~\ref{fig:miniimagenet_prior_ours_
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{images/ours/chains_unconditional.png}
+    \includegraphics[width=.8\linewidth]{chains_unconditional.png}
     \caption{Sampling denoising chain from $t=500$ up to $t=0$, shown at regular intervals, unconditional. We show only the last $500$ steps of this process, as the first $500$ steps are not visually informative. The sampling procedure is described in Algorithm~\ref{alg:sample}}
     \label{fig:miniimagenet_prior_ours_chain_unconditional}
 \end{figure}
@@ -534,7 +534,7 @@ We consider a neural network to model  $\varepsilon_\theta(\latentcont^t ,t)$. T
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=2.0]{images/network_toy.png}
+    \includegraphics[scale=2.0]{network_toy.png}
     \caption{Graphical representation of the neural network used for the toy dataset.}
     \label{ap:fig:toynetwork}
 \end{figure}
@@ -576,7 +576,7 @@ In this toy example, the use of the third part of the loss $\sum_{t=0}^T \mathca
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.4]{images/codebookstraining.png}
+    \includegraphics[scale=0.4]{codebookstraining.png}
     \caption{Left, initial random codebooks positions. Right, after training, position of codebook vectors. Note that the codebook indexes do not match the indexes of the Gaussians, the model learnt to make the associations between neighboring centroids in a different order.}
     \label{ap:codebooks}
 \end{figure}
@@ -587,7 +587,7 @@ In this toy example, the use of the third part of the loss $\sum_{t=0}^T \mathca
 We consider a case in which we want to reconstruct an $x$ while we only know one (or a few) dimensions, and sample the others. Consider that $x$ is generated using a sequence $q= (q_1,q_2,q_",q_4,q_5)$ where the last one if fixed $q_1 = 0, q_5 = 4$. Then, knowing $q_1, q_5$, we sample $q_2,q_3,q_4$, as shown in Figure \ref{fig:fixeddim}.
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.4]{images/samplesFixed.png}
+    \includegraphics[scale=0.4]{samplesFixed.png}
     \caption{Three independent sampling of $X$ using a trained diffusion bridge, with fixed $q_1 = 0, q_5 = 4$. The three corresponding sequences are $(0,7,6,5,4)$, $(0,1,2,3,4)$, $(0,7,6,5,4)$ all valid sequences.}
     \label{fig:fixeddim}
 \end{figure}
@@ -599,14 +599,14 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 \subsection{MiniImageNet}
 \begin{figure}[!htb]
     \centering
-    \includegraphics[width=0.9\linewidth]{images/vqvae_miniImagenet_reconstruction.png}
+    \includegraphics[width=0.9\linewidth]{vqvae_miniImagenet_reconstruction.png}
     \caption{Reconstruction of the trained VQ-VAE on the \textit{mini}ImageNet dataset. Original images are encoded, discretised, and decoded.}
     \label{fig:miniimagenet_vqvae}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{images/ours/samples.png}
+    \includegraphics[width=.8\linewidth]{samples.png}
     \caption{Samples from our model for the miniimagenet dataset}
     \label{fig:miniimagenet_prior_ours2}
 \end{figure}
@@ -614,9 +614,9 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{images/ours/cond_sampling2.png}
-    \includegraphics[width=.8\linewidth]{images/cond_sampling_pixelcnn_train.png}
-    \includegraphics[width=.8\linewidth]{images/cond_sampling_pixelcnn_train2.png}
+    \includegraphics[width=.8\linewidth]{cond_sampling2.png}
+    \includegraphics[width=.8\linewidth]{cond_sampling_pixelcnn_train.png}
+    \includegraphics[width=.8\linewidth]{cond_sampling_pixelcnn_train2.png}
     \caption{Conditional sampling: Top: reconstructions from the vqvae of originals images, Middle: conditional sampling with the left side of the image as condition, for our model. Bottom 1 and 2: conditional sampling in the same context with the PixelCNN prior.}
     \label{fig:miniimagenet_prior_ours_conditional2}
 \end{figure}
@@ -624,12 +624,12 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_14_4.png}
-    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_14_0.png}
-    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_13_4.png}
-    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_14_1.png}
-    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_12_1.png}
-    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_10_4.png}
+    \includegraphics[width=.8\linewidth]{media_images_conditional_sampling_chain_14_4.png}
+    \includegraphics[width=.8\linewidth]{media_images_conditional_sampling_chain_14_0.png}
+    \includegraphics[width=.8\linewidth]{media_images_conditional_sampling_chain_13_4.png}
+    \includegraphics[width=.8\linewidth]{media_images_conditional_sampling_chain_14_1.png}
+    \includegraphics[width=.8\linewidth]{media_images_conditional_sampling_chain_12_1.png}
+    \includegraphics[width=.8\linewidth]{media_images_conditional_sampling_chain_10_4.png}
     \caption{Sampling denoising chain from up to $t=0$, shown at regular intervals, conditioned on the left part of the picture. The sampling procedure is described in Appendix~\ref{ap:inpainting}.}
     \label{fig:miniimagenet_prior_ours_chain2}
 \end{figure}
@@ -637,9 +637,9 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 \iffalse
 \begin{figure}
     \centering
-    \includegraphics[width=0.5\linewidth]{images/ours/cond_samples2.png}
-    \includegraphics[width=.8\linewidth]{images/cond_sampling_pixelcnn_train.png}
-    \includegraphics[width=.8\linewidth]{images/cond_sampling_pixelcnn_train2.png}
+    \includegraphics[width=0.5\linewidth]{cond_samples2.png}
+    \includegraphics[width=.8\linewidth]{cond_sampling_pixelcnn_train.png}
+    \includegraphics[width=.8\linewidth]{cond_sampling_pixelcnn_train2.png}
     \caption{Conditional sampling: Top: reconstructions from the VQ-VAE of originals images, Middle: conditional sampling with the left side of the image as condition, for our model. Bottom 1 and 2: conditional sampling in the same context with the PixelCNN prior.}
     \label{fig:miniimagenet_prior_ours_conditional3}
 \end{figure}
@@ -648,12 +648,12 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 \begin{figure}
     \centering
     \begin{minipage}[b]{0.45\textwidth}
-        \includegraphics[width=1.\linewidth]{images/cond_sampling_original.jpg}
+        \includegraphics[width=1.\linewidth]{cond_sampling_original.jpg}
     \end{minipage}
     \hfill
     \begin{minipage}[b]{0.45\textwidth}
 
-    \includegraphics[width=1.\linewidth]{images/cond_sampling_pixelcnn.jpg}
+    \includegraphics[width=1.\linewidth]{cond_sampling_pixelcnn.jpg}
         \end{minipage}
     \caption{Conditional sampling with the PixelCNN prior. \textbf{Left}: original images, \textbf{Right}: conditional sampling with the left side of the image as condition. Each row represents a class of the validation set of the \textit{mini}ImageNet dataset.}
     \label{fig:miniimagenet_prior_pixelcnn_conditional}
@@ -666,7 +666,7 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 
 \begin{figure}[!htb]
     \centering
-    \includegraphics[width=\linewidth]{images/cifar_vqvae.png}
+    \includegraphics[width=\linewidth]{cifar_vqvae.png}
     \caption{Reconstruction of the VQVAE model used in the following benchmarks.}
     \label{fig:cifar_vqvae}
 \end{figure}
@@ -674,11 +674,11 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 \begin{figure}[!htb]
     \centering
     \begin{minipage}[b]{0.4\textwidth}
-    \includegraphics[width=1.\linewidth]{images/samples_pixel_cifar.png}
+    \includegraphics[width=1.\linewidth]{samples_pixel_cifar.png}
     \end{minipage}
     \hfill
     \begin{minipage}[b]{0.4\textwidth}
-    \includegraphics[width=1.\linewidth]{images/ours/samples_cifar.png}
+    \includegraphics[width=1.\linewidth]{samples_cifar.png}
     \end{minipage}
         \caption{Samples from the PixelCNN prior (left) and from our diffusion prior (right) on CIFAR10.}
         
