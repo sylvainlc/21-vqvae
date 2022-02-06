@@ -11,6 +11,7 @@
 \usepackage{booktabs} 
 \usepackage{algorithmic,algorithm2e}
 %\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\usepackage[a4paper, total={6in, 8in}]{geometry}
 
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
@@ -82,7 +83,7 @@ An autoregressive pixelCNN prior model has several drawbacks, which are the same
 Figure~\ref{fig:archi} describes the complete architecture of our model.
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\linewidth]{images/Archi.png}
+    \includegraphics[width=.8\linewidth]{images/Archi.png}
     \caption{Our proposed architecture, for a prior based on a Ornstein-Uhlenbeck bridge. The top pathway from \textit{input image} to $\latentcont^0$, to $\latentdis^0$, to \textit{reconstructed image} resembles the original VQ-VAE model. The vertical pathway from $(\latentcont^0, \latentdis^0)$ to $(\latentcont^T, \latentdis^T)$ and backwards is based on a denoising diffusion process. See Section~\ref{sec:OU} and Algorithm~\ref{alg:sample} for the corresponding sampling procedure.}
     \label{fig:archi}
 \end{figure}
@@ -196,9 +197,9 @@ $$
 \bckw^{\latentcont}_{\varphi,s|0,t}(\latentcont^{s}|\latentcont^{t},\latentcont^{0}) \propto q^{\latentcont}_{\varphi,s|0}(\latentcont^{t-1}|\latentcont^{0}) q^{\latentcont}_{\varphi,t|s}(\latentcont^{t}|\latentcont^{s})\,,
 $$
 where $0\leqslant s\leqslant t$, so that $\bckw^{\latentcont}_{\varphi,t-1|0,t}(\latentcont^{t-1}|\latentcont^{t},\latentcont^{0})$ is a Gaussian probability density function with mean
-\begin{multline*}
- \tilde \mu_{\varphi,t-1|0,t}(\latentcont^0,\latentcont^t) = \frac{\beta_t}{1-\bar{\alpha}_t}\left(z_* + \sqrt{\bar{\alpha}_{t-1}}(\latentcont^0-z_*)\right)\\  + \frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\sqrt{\alpha}_t\left(\latentcont^t - (1 - \sqrt{\alpha_t} )z_*\right)
- \end{multline*}
+$$
+ \tilde \mu_{\varphi,t-1|0,t}(\latentcont^0,\latentcont^t) = \frac{\beta_t}{1-\bar{\alpha}_t}\left(z_* + \sqrt{\bar{\alpha}_{t-1}}(\latentcont^0-z_*)\right) + \frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\sqrt{\alpha}_t\left(\latentcont^t - (1 - \sqrt{\alpha_t} )z_*\right)
+$$
  and covariance matrix
  $$
  \tilde \sigma^2_{\varphi,t-1|0,t} = \frac{\eta^2}{2\vartheta}\frac{1- \bar \alpha_{t-1}}{1- \bar \alpha_{t}}\beta_t\, \mathbf{I}_{dN}\,,
@@ -268,7 +269,7 @@ This terms connects the diffusion and quantisation parts as it creates a gradien
 
    \STATE Sample $t \sim Uniform(\{0,\ldots, T\})$ 
    \STATE Sample $\varepsilon_t \sim \mathcal{N}(0,\mathbf{I}_{dN})$
-   \STATE Sample $\latentcont^{t} \sim q_\varphi(\latentcont^t|\latentcont^0)$ (using $\varepsilon_t$)
+   \STATE Sample $\latentcont^{t} \sim q_{\varphi,t}(\latentcont^t|\latentcont^0)$ (using $\varepsilon_t$)
    \STATE Compute $\textcolor{olive}{\hat{\mathcal{L}}_t(\theta,\varphi)}$ from $\varepsilon_\theta(\latentcont^{t},t)$ and $\varepsilon_t$ using \eqref{eq:hoparam}
    \STATE Compute $\textcolor{violet}{\hat{\mathcal{L}}^{reg}_t(\theta,\varphi)}$ from $\latentcont^{t}$ \textit{(see text)}
 
@@ -359,7 +360,7 @@ We evaluated the computation cost of sampling a batch of 32 images, on a GTX TIT
 \begin{table}
     \caption{Results on \textit{mini}ImageNet. Metrics are computed on the validation dataset. The means are displayed along with the standard deviation in parenthesis.}
 \centering
-    \resizebox{.9\textwidth}{!}{\begin{tabular}{ |l||c|c|c| }
+    \resizebox{.75\textwidth}{!}{\begin{tabular}{ |l||c|c|c| }
         \hline
         & NLL & FID & s/sample \\
         \hline
@@ -373,7 +374,7 @@ We evaluated the computation cost of sampling a batch of 32 images, on a GTX TIT
 \begin{table}
     \caption{Results on CIFAR10. Metrics are computed on the validation dataset. The means are displayed along with the standard deviation in parenthesis.}
 \centering
-    \resizebox{.9\textwidth}{!}{\begin{tabular}{ |l||c|c|c| }
+    \resizebox{.75\textwidth}{!}{\begin{tabular}{ |l||c|c|c| }
         \hline
         & NLL & FID & s/sample \\
         \hline
@@ -395,13 +396,13 @@ and samples from our prior in Figure \ref{fig:diffusion_samples}. Additional sam
 
 \begin{subfigure}{\linewidth}
     \centering
-    \includegraphics[width=1.\linewidth]{images/ours/samples2.png}
+    \includegraphics[width=.8\linewidth]{images/ours/samples2.png}
     \caption{Samples from our diffusion prior.}
     \label{fig:diffusion_samples}
 \end{subfigure}
 \begin{subfigure}{\linewidth}
     \centering
-    \includegraphics[width=1.\linewidth]{images/ours/pixel_samples.png}
+    \includegraphics[width=.8\linewidth]{images/ours/pixel_samples.png}
     \caption{Samples from the PixelCNN prior.}
     \label{fig:pixel_samples}
 \end{subfigure}
@@ -418,7 +419,7 @@ a specific conditioning order. Additional conditional sampling experiments are g
 
 \begin{figure}
     \centering
-    \includegraphics[width=\linewidth]{images/ours/cond_samples_center_2.png}
+    \includegraphics[width=.8\linewidth]{images/ours/cond_samples_center_2.png}
 
     \caption{Conditional sampling with centered mask: for each of the 3 different images, samples from our diffusion are on top and from PixelCNN on the bottom. For each row: the image on the left is the VQVAE masked reconstruction, the image on the right is the full VQ-VAE reconstruction. Images in-between are independent conditional samples from the models.}
     \label{fig:miniimagenet_prior_ours_conditional}
@@ -427,7 +428,7 @@ a specific conditioning order. Additional conditional sampling experiments are g
 
 \begin{figure}
     \centering
-    \includegraphics[width=\linewidth]{images/ours/cond_samples_topleft.png}
+    \includegraphics[width=.8\linewidth]{images/ours/cond_samples_topleft.png}
 
     \caption{Conditional sampling with top left mask: for each of the 3 different images, samples from our diffusion are on top and from PixelCNN on the bottom. For each row: the image on the left is the VQVAE masked reconstruction, the image on the right is the full VQ-VAE reconstruction. Images in-between are independent conditional samples from the models.}
     \label{fig:miniimagenet_prior_ours_conditional:topleft}
@@ -439,7 +440,7 @@ In addition to the conditional samples, Figure~\ref{fig:miniimagenet_prior_ours_
 
 \begin{figure}
     \centering
-    \includegraphics[width=1\linewidth]{images/ours/chains2.png}
+    \includegraphics[width=.8\linewidth]{images/ours/chains2.png}
     \caption{Sampling denoising chain from $t=500$ up to $t=0$, shown at regular intervals, conditioned on the outer part of the picture. We show only the last $500$ steps of this process, as the first $500$ steps are not visually informative. The sampling procedure is described in Appendix~\ref{ap:inpainting}.}
     \label{fig:miniimagenet_prior_ours_chain}
 \end{figure}
@@ -447,7 +448,7 @@ In addition to the conditional samples, Figure~\ref{fig:miniimagenet_prior_ours_
 
 \begin{figure}
     \centering
-    \includegraphics[width=1\linewidth]{images/ours/chains_unconditional.png}
+    \includegraphics[width=.8\linewidth]{images/ours/chains_unconditional.png}
     \caption{Sampling denoising chain from $t=500$ up to $t=0$, shown at regular intervals, unconditional. We show only the last $500$ steps of this process, as the first $500$ steps are not visually informative. The sampling procedure is described in Algorithm~\ref{alg:sample}}
     \label{fig:miniimagenet_prior_ours_chain_unconditional}
 \end{figure}
@@ -485,9 +486,9 @@ $$
 \mathbb{E}_{q_{\varphi}}\left[\log \frac{p^{\latentcont}_{\theta}(\latentcont^{0:T})}{q^{\latentcont}_{\varphi}(\latentcont^{0:T}| x)}\right] = \mathbb{E}_{q_{\varphi}}\left[\log p^{\latentcont}_{\theta,T}(\latentcont^{T})\right] +\mathbb{E}_{q_{\varphi}}\left[\log \frac{p^{\latentcont}_{\theta,0|1}(\latentcont^{0}|\latentcont^{1})}{q^{\latentcont}_{\varphi,1|0}(\latentcont^{1}|\latentcont^{0})}\right] + \sum_{t=2}^T \mathbb{E}_{q_{\varphi}}\left[\log \frac{p^{\latentcont}_{\theta,t-1|t}(\latentcont^{t-1}|\latentcont^{t})}{q^{\latentcont}_{\varphi,t|t-1}(\latentcont^{t}|\latentcont^{t-1})}\right]\,.
 $$
 By \eqref{eq:markov:bridge},
-$$
-\mathbb{E}_{q_{\varphi}}\left[\log \frac{p^{\latentcont}_{\theta}(\latentcont^{0:T})}{q^{\latentcont}_{\varphi}(\latentcont^{0:T}| x)}\right] = \mathbb{E}_{q_{\varphi}}\left[\log \frac{p^{\latentcont}_{\theta,T}(\latentcont^{T})}{q^{\latentcont}_{\varphi,T|0}(\latentcont^{T}|\latentcont^{0})}\right] + \sum_{t=2}^T \mathbb{E}_{q_{\varphi}}\left[\log \frac{p^{\latentcont}_{\theta,t-1|t}(\latentcont^{t-1}|\latentcont^{t})}{q^{\latentcont}_{\varphi,t-1|0,t}(\latentcont^{t-1}|\latentcont^{0},\latentcont^{t})}\right] + \mathbb{E}_{q_{\varphi}}\left[\log p^{\latentcont}_{\theta,0|1}(\latentcont^{0}|\latentcont^{1})\right]\,,
-$$
+\begin{multline*}
+\mathbb{E}_{q_{\varphi}}\left[\log \frac{p^{\latentcont}_{\theta}(\latentcont^{0:T})}{q^{\latentcont}_{\varphi}(\latentcont^{0:T}| x)}\right] = \mathbb{E}_{q_{\varphi}}\left[\log \frac{p^{\latentcont}_{\theta,T}(\latentcont^{T})}{q^{\latentcont}_{\varphi,T|0}(\latentcont^{T}|\latentcont^{0})}\right] + \sum_{t=2}^T \mathbb{E}_{q_{\varphi}}\left[\log \frac{p^{\latentcont}_{\theta,t-1|t}(\latentcont^{t-1}|\latentcont^{t})}{q^{\latentcont}_{\varphi,t-1|0,t}(\latentcont^{t-1}|\latentcont^{0},\latentcont^{t})}\right] \\+ \mathbb{E}_{q_{\varphi}}\left[\log p^{\latentcont}_{\theta,0|1}(\latentcont^{0}|\latentcont^{1})\right]\,,
+\end{multline*}
 which concludes the proof.
 \end{proof}
 
@@ -594,29 +595,6 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
  
 \section{Additional visuals}\label{ap:additional_visuals}
 
-\subsection{Cifar}
-
-\begin{figure}[!htb]
-    \centering
-    \includegraphics[width=\linewidth]{images/cifar_vqvae.png}
-    \caption{Reconstruction of the VQVAE model used in the following benchmarks.}
-    \label{fig:cifar_vqvae}
-\end{figure}
-
-\begin{figure}[!htb]
-    \centering
-    \begin{minipage}[b]{0.4\textwidth}
-    \includegraphics[width=1.\linewidth]{images/samples_pixel_cifar.png}
-    \end{minipage}
-    \hfill
-    \begin{minipage}[b]{0.4\textwidth}
-    \includegraphics[width=1.\linewidth]{images/ours/samples_cifar.png}
-    \end{minipage}
-        \caption{Samples from the PixelCNN prior (left) and from our diffusion prior (right) on CIFAR10.}
-        
-    \label{fig:cifar_priors}
-\end{figure}
-
 
 \subsection{MiniImageNet}
 \begin{figure}[!htb]
@@ -628,7 +606,7 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 
 \begin{figure}
     \centering
-    \includegraphics[width=1.\linewidth]{images/ours/samples.png}
+    \includegraphics[width=.8\linewidth]{images/ours/samples.png}
     \caption{Samples from our model for the miniimagenet dataset}
     \label{fig:miniimagenet_prior_ours2}
 \end{figure}
@@ -636,9 +614,9 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 
 \begin{figure}
     \centering
-    \includegraphics[width=1.\linewidth]{images/ours/cond_sampling2.png}
-    \includegraphics[width=1.\linewidth]{images/cond_sampling_pixelcnn_train.png}
-    \includegraphics[width=1.\linewidth]{images/cond_sampling_pixelcnn_train2.png}
+    \includegraphics[width=.8\linewidth]{images/ours/cond_sampling2.png}
+    \includegraphics[width=.8\linewidth]{images/cond_sampling_pixelcnn_train.png}
+    \includegraphics[width=.8\linewidth]{images/cond_sampling_pixelcnn_train2.png}
     \caption{Conditional sampling: Top: reconstructions from the vqvae of originals images, Middle: conditional sampling with the left side of the image as condition, for our model. Bottom 1 and 2: conditional sampling in the same context with the PixelCNN prior.}
     \label{fig:miniimagenet_prior_ours_conditional2}
 \end{figure}
@@ -681,6 +659,32 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
     \label{fig:miniimagenet_prior_pixelcnn_conditional}
 
 \end{figure}
+
+\clearpage
+
+\subsection{Cifar}
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\linewidth]{images/cifar_vqvae.png}
+    \caption{Reconstruction of the VQVAE model used in the following benchmarks.}
+    \label{fig:cifar_vqvae}
+\end{figure}
+
+\begin{figure}[!htb]
+    \centering
+    \begin{minipage}[b]{0.4\textwidth}
+    \includegraphics[width=1.\linewidth]{images/samples_pixel_cifar.png}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.4\textwidth}
+    \includegraphics[width=1.\linewidth]{images/ours/samples_cifar.png}
+    \end{minipage}
+        \caption{Samples from the PixelCNN prior (left) and from our diffusion prior (right) on CIFAR10.}
+        
+    \label{fig:cifar_priors}
+\end{figure}
+
 
 
 \bibliographystyle{apalike}
