@@ -37,13 +37,14 @@
 \title{Diffusion bridges  vector quantized Variational AutoEncoders}
 \date{}
 
-\author[$\star$]{Max Cohen}
+\author[$\star$, $\ddag$]{Max Cohen}
 \author[$\dag$]{Guillaume Quispe}
 \author[$\star$]{Sylvain Le Corff}
 \author[$\dag$]{Charles Ollion}
 \author[$\dag$]{\'Eric Moulines}
 
 \affil[$\star$]{{\small SAMOVAR, T\'el\'ecom SudParis, Institut Polytechnique de Paris, Palaiseau.}}
+\affil[$\ddag$]{{\small Accenta, Boulogne-Billancourt.}}
 \affil[$\dag$]{{\small CMAP, \'Ecole Polytechnique, Institut Polytechnique de Paris, Palaiseau.}}
 
 \lhead{}
@@ -57,33 +58,40 @@
 \maketitle
 
 \begin{abstract}
-Vector Quantised-Variational AutoEncoders (VQ-VAE) are generative models based on discrete latent representations of the data, where inputs are mapped to a finite set of learned embeddings.
-To generate new samples, an autoregressive prior distribution over the discrete states must be trained separately. This prior is generally very complex and leads to very slow generation. In this work, we propose a new model to train the prior and the encoder/decoder networks simultaneously. We build a diffusion bridge between a continuous coded vector and a non-informative prior distribution.  The latent discrete states are then given as random functions of these continuous vectors. We show that our model is competitive with the autoregressive prior on the mini-Imagenet dataset and is very efficient in both optimization and sampling. Our framework also extends the standard VQ-VAE and enables end-to-end training.
+Vector Quantized-Variational AutoEncoders (VQ-VAE) are generative models based on discrete latent representations of the data, where inputs are mapped to a finite set of learned embeddings.
+To generate new samples, an autoregressive prior distribution over the discrete states must be trained separately. This prior is generally very complex and leads to slow generation. In this work, we propose a new model to train the prior and the encoder/decoder networks simultaneously. We build a diffusion bridge between a continuous coded vector and a non-informative prior distribution.  The latent discrete states are then given as random functions of these continuous vectors. We show that our model is competitive with the autoregressive prior on the mini-Imagenet and CIFAR dataset and is efficient in both optimization and sampling. Our framework also extends the standard VQ-VAE and enables end-to-end training.
 \end{abstract}
 
 
 \section{Introduction}
-Variational AutoEncoders (VAE) have emerged as important generative models based on latent representations of the data. 
-While the latent states are usually continuous vectors, Vector Quantised Variational AutoEncoders (VQ-VAE) have demonstrated the usefulness of discrete latent spaces and have been successfully applied in image and speech generation \cite{oord2017neural, esser2021taming, ramesh2021zero}. 
+Variational AutoEncoders (VAE) have emerged as important generative models based on latent representations of the data.
+While the latent states are usually continuous vectors, Vector Quantized Variational AutoEncoders (VQ-VAE) have demonstrated the usefulness of discrete latent spaces and have been successfully applied in image and speech generation \cite{oord2017neural, esser2021taming, ramesh2021zero}. 
 
-In a VQ-VAE, the distribution of the inputs is assumed to depend on a hidden discrete state. Large scale image generation VQ-VAEs use for instance multiple discrete latent states, typically organized as 2-dimensional lattices. In the original VQ-VAE, the authors propose a variational approach to approximate the posterior distribution of the discrete states given the observations. The variational distribution takes as input the observation, which is passed through an encoder. The discrete latent variable is then computed by a nearest neighbour procedure that maps the encoded vector to the nearest discrete embedding. 
+In a VQ-VAE, the distribution of the inputs is assumed to depend on a hidden discrete state. Large scale image generation VQ-VAEs use for instance multiple discrete latent states, typically organized as 2-dimensional lattices. In the original VQ-VAE, the authors propose a variational approach to approximate the posterior distribution of the discrete states given the observations. The variational distribution takes as input the observation, which is passed through an encoder. The discrete latent variable is then computed by a nearest neighbour procedure that maps the encoded vector to the nearest discrete embedding.
 
- It has been argued that the success of VQ-VAEs lies in the fact that they do not suffer from the usual posterior collapse of VAEs  \cite{oord2017neural}. However, the implementation of VQ-VAE involves many practical tricks and still suffers from several limitations. First, the quantisation step leads the authors to propose a rough approximation of the gradient of the loss function by copying gradients from the decoder input to the encoder output. Second, the prior distribution of the discrete variables is initially assumed to be uniform when training the VQ-VAE. In a second training step, very high-dimensional autoregressive models such as PixelCNN \cite{oord2016conditional, salimans2017pixelcnn, chen2018pixelsnail} and WaveNet \cite{oord2016wavenet} are estimated to obtain a complex prior distribution. Joint training of the prior and the VQ-VAE is a challenging task for which no satisfactory solutions exist yet. Our work addresses both problems by introducing a new mathematical framework that extends and generalizes the standard VQ-VAE. Our method enables end-to-end training and, in particular, bypasses the separate training of an autoregressive prior.
+
+ It has been argued that the success of VQ-VAEs lies in the fact that they do not suffer from the usual posterior collapse of VAEs  \cite{oord2017neural}. However, the implementation of VQ-VAE involves many practical tricks and still suffers from several limitations. First, the quantization step leads the authors to propose a rough approximation of the gradient of the loss function by copying gradients from the decoder input to the encoder output. Second, the prior distribution of the discrete variables is initially assumed to be uniform when training the VQ-VAE. In a second training step, high-dimensional autoregressive models such as PixelCNN \cite{oord2016conditional, salimans2017pixelcnn, chen2018pixelsnail} and WaveNet \cite{oord2016wavenet} are estimated to obtain a complex prior distribution. Joint training of the prior and the VQ-VAE is a challenging task for which no satisfactory solutions exist yet. Our work addresses both problems by introducing a new mathematical framework that extends and generalizes the standard VQ-VAE. Our method enables end-to-end training and, in particular, bypasses the separate training of an autoregressive prior.
+
 
 An autoregressive pixelCNN prior model has several drawbacks, which are the same in the pixel space or in the latent space.  The data is assumed to have a fixed sequential order, which forces the generation to start at a certain point, typically in the upper left corner, and span the image or the 2-dimensional latent lattice in an arbitrary way. At each step, a new latent variable is sampled using the previously sampled pixels or latent variables. Inference may then accumulate prediction errors, while training provides ground truth at each step. 
  The runtime process, which depends mainly on the number of network evaluations, is sequential and depends on the size of the image or the 2-dimensional latent lattice, which can become very large for high-dimensional objects.
- 
- The influence of the prior is further explored in \cite{razavi2019generating}, where VQ-VAE is used to sample images on a larger scale, using two layers of discrete latent variables, and  \cite{willetts:2021} use hierarchical discrete VAEs with numerous layers of latent variables. Other works such as \cite{esser2021taming, ramesh2021zero} have used Transformers to autoregressively model a sequence of latent variables: while these works benefit from the recent advances of Transformers for large language models, their autoregressive process still suffers from the same drawbacks as pixelCNN-like priors. Departing from autoregressive models, our contributions are summarized as follows.
- 
+
+ The influence of the prior is further explored in \cite{razavi2019generating}, where VQ-VAE is used to sample images on a larger scale, using two layers of discrete latent variables, and  \cite{willetts:2021} use hierarchical discrete VAEs with numerous layers of latent variables. Other works such as \cite{esser2021taming, ramesh2021zero} have used Transformers to autoregressively model a sequence of latent variables: while these works benefit from the recent advances of Transformers for large language models, their autoregressive process still suffers from the same drawbacks as pixelCNN-like priors.
+
+
+ The main claim of our paper is that using diffusions in a continuous space,  $\mathbb{R}^{d \times N}$ in our setting, is a very efficient way to learn complex discrete distributions, with support on a large space (here with cardinality $K^N$). We only require an embedded space, an uninformative target distribution (here a Gaussian law), and use a continuous bridge process to learn the discrete target distribution. In that direction, our contribution is inspired by the literature but also significantly different. Our procedure departs from the diffusion probabilistic model approach of \cite{ho2020denoising}, which highlights the role of bridge processes in denoising continuous target laws, and from \cite{hoogeboom2021argmax},  where multinomial diffusions are used to noise and denoise but prevent the use of the expressiveness of continuous bridges, and also do not scale well with $K$ as remarked by its authors. Although we target a discrete distribution, our approach does not suffer from this limitation.
+
+ Our contributions are summarized as follows.
 \begin{itemize}
-    \item We propose a new mathematical framework for VQ-VAEs. We introduce a two-stage prior distribution. Following the diffusion probabilistic model approach of \cite{ho2020denoising}, we consider first a continuous latent vector parameterised as a Markov chain. The discrete latent states are defined  as random functions of this Markov chain. The  transition kernels of the continuous latent variables are trained using diffusion bridges to gradually produce samples that match the data.
+    \item We propose a new mathematical framework for VQ-VAEs. We introduce a two-stage prior distribution. Following the diffusion probabilistic model approach of \cite{ho2020denoising}, we consider first a continuous latent vector parameterized as a Markov chain. The discrete latent states are defined  as random functions of this Markov chain. The  transition kernels of the continuous latent variables are trained using diffusion bridges to gradually produce samples that match the data.
     \item  To our best knowledge, this is the first probabilistic generative model to use denoising diffusion in discrete latent space. This framework allows for end-to-end training of VQ-VAE.
+    \item We focus on VQ-VAE as our framework enables simultaneous training of all components of those popular discrete models which is not straightforward. However, our methodology is  more general and allows the use of continuous embeddings and diffusion bridges to sample form any discrete laws.
     \item We present our method on a toy dataset and then compare its efficiency to the pixelCNN prior of the original VQ-VAE on the miniImagenet dataset.
 \end{itemize}
 Figure~\ref{fig:archi} describes the complete architecture of our model.
 \begin{figure}[h]
     \centering
-    \includegraphics[width=.8\linewidth]{./Archi.pdf}
+    \includegraphics[width=.8\linewidth]{images/Archi.png}
     \caption{Our proposed architecture, for a prior based on a Ornstein-Uhlenbeck bridge. The top pathway from \textit{input image} to $\latentcont^0$, to $\latentdis^0$, to \textit{reconstructed image} resembles the original VQ-VAE model. The vertical pathway from $(\latentcont^0, \latentdis^0)$ to $(\latentcont^T, \latentdis^T)$ and backwards is based on a denoising diffusion process. See Section~\ref{sec:OU} and Algorithm~\ref{alg:sample} for the corresponding sampling procedure.}
     \label{fig:archi}
 \end{figure}
@@ -232,9 +240,8 @@ which yields
 \begin{equation}
     \label{eq:hoparam}
     \mathcal{L}_t(\theta,\varphi) \\
-    = \frac{-\beta_t}{2\alpha_t(1-\bar\alpha_t)}\mathbb{E}\left[\left\|\varepsilon_t - \varepsilon_\theta(\latentcontpred^t(\latentcont^{0},\varepsilon_t) ,t) \right\|_2^2\right]\,.
+    = \frac{-\beta_t}{2\alpha_t(1-\bar\alpha_{t-1})}\mathbb{E}\left[\left\|\varepsilon_t - \varepsilon_\theta(\latentcontpred^t(\latentcont^{0},\varepsilon_t) ,t) \right\|_2^2\right]\,.
 \end{equation}
-    
 Several choices can be proposed to model the function $\varepsilon_\theta$. The deep learning architectures considered in the numerical experiments are discussed in Appendix~\ref{ap:networks} and ~\ref{ap:additionaltoy}. Similarly to \cite{ho2020denoising}, we use a stochastic version of our loss function:  sample $t$ uniformly in $\{0, \ldots,  T\}$, and consider $\mathcal{L}_t(\theta,\varphi)$ instead of the full sum over all $t$. The final training algorithm is described in Algorithm~\ref{alg:train} and the sampling procedure in Algorithm~\ref{alg:sample}. 
 
 \paragraph{Connections with the VQ-VAE loss function. } In the special case where $T=0$, our loss function can be reduced to a standard VQ-VAE loss function. In that case, write $\latentdis = \latentdis^0$ and $\latentcont = \latentcont^0$, the ELBO then becomes: 
@@ -297,7 +304,7 @@ This terms connects the diffusion and quantisation parts as it creates a gradien
 \section{Experiments}
 
 \subsection{Toy Experiment}
-In order to understand the proposed denoising procedure for VQ-VAE, consider a simple toy setting in which there is no encoder nor decoder, and the codebooks $\{\embed_j\}_{0\leqslant j \leqslant K-1}$ are fixed. In this case, with $d=2$ and $N=5$, $x = \latentcont^0 \in \rset^{2\times 5}$. We choose $K=8$ and the codebooks $\embed_j = \mu_j \in \rset^2$, $0\leqslant j \leqslant K-1$, are fixed centers at regular angular intervals in $\rset^2$ and shown in Figure~\ref{fig:toydata}; the latent states $(\latentdis^t)_{1\leq t\leq T}$ lie in $\{\embed_0,\ldots,\embed_7\}^5$. Data generation proceeds as follows. First, sample a sequence of $(q_1,\ldots,q_5)$ in $\{0,\dots,7\}$: $q_1$ has a uniform distribution, and, for $s\in\{0,1,2,3\}$, $q_{s+1} = q_s + b_s \mod 8$, where $b_s$ are independent Bernoulli samples with parameter $1/2$ taking values in $\{-1, 1\}$. Conditionally on $(q_1,\ldots,q_5)$, $x$ is a Gaussian random vector with mean $(\embed_{q_1},\ldots,\embed_{q_5})$ and variance $\mathbf{I}_{2\times 5}$. 
+In order to understand the proposed denoising procedure for VQ-VAE, consider a simple toy setting in which there is no encoder nor decoder, and the codebooks $\{\embed_j\}_{0\leqslant j \leqslant K-1}$ are fixed. In this case, with $d=2$ and $N=5$, $x = \latentcont^0 \in \rset^{2\times 5}$. We choose $K=8$ and the codebooks $\embed_j = \mu_j \in \rset^2$, $0\leqslant j \leqslant K-1$, are fixed centers at regular angular intervals in $\rset^2$ and shown in Figure~\ref{fig:toydata}; the latent states $(\latentdis^t)_{1\leq t\leq T}$ lie in $\{\embed_0,\ldots,\embed_7\}^5$. Data generation proceeds as follows. First, sample a sequence of $(q_1,\ldots,q_5)$ in $\{0,\dots,7\}$: $q_1$ has a uniform distribution, and, for $s\in\{0,1,2,3\}$, $q_{s+1} = q_s + b_s \mod 8$, where $b_s$ are independent Bernoulli samples with parameter $1/2$ taking values in $\{-1, 1\}$. Conditionally on $(q_1,\ldots,q_5)$, $x$ is a Gaussian random vector with mean $(\embed_{q_1},\ldots,\embed_{q_5})$ and variance $\mathbf{I}_{2\times 5}$.
 
 
 \begin{figure}[h!]
@@ -325,23 +332,27 @@ We train our bridge procedure with $T=50$ timesteps, $\vartheta=2, \eta=0.1$, ot
 In this section, we focus on image synthesis using CIFAR10 and miniImageNet datasets. The goal is to evaluate the efficiency and properties of our model compared to the original PixelCNN. Note that for fair comparisons, the encoder, decoder and codebooks are pretrained and fixed for all models, only the prior is trained and evaluated here. As our goal is the comparison of priors, we did not focus on building the most efficient VQ-VAE, but rather a reasonable model in terms of size and efficiency.
 
 \paragraph{CIFAR10. }
- The CIFAR dataset consists of inputs $x$ of dimensions $32 \times 32$ with 3 channels. The encoder projects the input into a grid of continuous values $\latentcont^0$ of dimension $8 \times 8 \times 128$. After discretisation, $\{\latentdis^t\}_{0\leqslant t\leqslant T}$ are in a discrete latent space induced by the VQ-VAE which consists of values in $\{1,\ldots,K\}^{8 \times 8}$ with $K=256$. The pre-trained VQ-VAE reconstructions can be seen in Figure~\ref{fig:cifar_vqvae} in Appendix~\ref{ap:additional_visuals}.
+The CIFAR dataset consists of inputs $x$ of dimensions $32 \times 32$ with 3 channels. The encoder projects the input into a grid of continuous values $\latentcont^0$ of dimension $8 \times 8 \times 128$. After discretisation, $\{\latentdis^t\}_{0\leqslant t\leqslant T}$ are in a discrete latent space induced by the VQ-VAE which consists of values in $\{1,\ldots,K\}^{8 \times 8}$ with $K=256$. The pre-trained VQ-VAE reconstructions can be seen in Figure~\ref{fig:cifar_vqvae} in Appendix~\ref{ap:additional_visuals}.
 
 \paragraph{miniImageNet. }
 \textit{mini}ImageNet was introduced by \cite{Vinyals2016MatchingNF} to offer more complexity than CIFAR10, while still fitting in memory of modern machines.
 600 images were sampled for 100 different classes from the original ImageNet dataset, then scaled down, to obtain 60,000 images of dimension $84 \times 84$.
 In our experiments, we trained a VQVAE model to project those input images into a grid of continuous values $\latentcont^0$ of dimensions $21 \times 21 \times 32$, see Figure~\ref{fig:miniimagenet_vqvae} in Appendix~\ref{ap:additional_visuals}.
-The associated codebook contains $K=128$ vectors of dimension $32$. 
+The associated codebook contains $K=128$ vectors of dimension $32$.
 
 \paragraph{Prior models. }
-Once the VQ-VAE is trained on the miniImageNet (resp. CIFAR) dataset, the $84\times 84 \times 3$ (resp $32\times 32 \times 3$) images are passed to the encoder result in a $21 \times 21$ (resp. $8 \times 8$) feature map. From this model, we extract the discrete latent states from training samples to train a PixelCNN prior and the continuous latent states for our diffusion.
-Concerning our diffusion prior, we choose the Ornstein-Uhlenbeck process setting $\eta = \sqrt{2}$, $z_*=0$ and $\vartheta = 1$, with $T=1000$. 
+Once the VQ-VAE is trained on the miniImageNet and CIFAR datasets, the $84\times 84 \times 3$ and $32\times 32 \times 3$ images respectively are passed to the encoder and result in $21 \times 21$ and $8 \times 8$ feature maps respectively. From this model, we extract the discrete latent states from training samples to train a PixelCNN prior and the continuous latent states for our diffusion.
+Concerning our diffusion prior, we choose the Ornstein-Uhlenbeck process setting $\eta = \sqrt{2}$, $z_*=0$ and $\vartheta = 1$, with $T=1000$.
+
+\paragraph{End-to-End Training.}
+As an additional experiment, we propose an End-to-End training of the VQ-VAE and the diffusion process. To speed up training, we first start by pretraining the VQ-VAE, then learn the parameters of our diffusion prior alongside all the VQ-VAE parameters (encoder, decoder and codebooks). Note that in this setup, we cannot directly compare the NLL to PixelCNN or our previous diffusion model as the VQ-VAE has changed, but we can compare image generation metrics such as FID and sample quality.
+
 
 \subsection{Quantitative results}
 We benchmarked our model using three metrics, in order to highlight the performances of the proposed prior, the quality of produced samples as well as the associated computation costs.
 Results are given as a comparison to the original PixelCNN prior for both the \textit{mini}ImageNet (see Table \ref{tab:miniimagenet}) and the CIFAR10 (see Table~\ref{tab:cifar}) datasets.
 
-\paragraph{NLL. }\label{nll_paragraph}
+\paragraph{Negative Log Likelihood. }\label{nll_paragraph}
 Unlike most related papers, we are interested in computing the Negative Log Likelihood (NLL) directly in the latent space, as to evaluate the capacity of the priors to generate coherent latent maps.
 To this end, we mask a patch of the original latent space, and reconstruct the missing part, similar to image inpainting, following for instance \cite{van2016pixel}.
  In the case of our prior, for each sample $x$, we mask an area of the continuous latent state $\latentcont^0$, i.e. we mask some components of $\latentcont^0$, and aim at sampling the missing components given the observed ones using the prior model. Let $\underline{\latentdis}^0$ and $\underline{\latentcont}^0$ (resp. $\overline{\latentdis}^0$ and $\overline{\latentcont}^0$) be the masked (resp. observed) discrete and continuous latent variables. The target conditional likelihood is
@@ -351,16 +362,41 @@ p_{\theta}(\underline{\latentdis}^0|\overline{\latentcont}^0) &= \int p_{\theta}
 \end{align*}
 This likelihood is intractable and replaced by a simple Monte Carlo estimate $\hat{p}_{\theta}(\underline{\latentdis}^0|\underline{\latentcont}^0)$ where $\underline{\latentcont}^0\sim p_{\theta}(\underline{\latentcont}^0|\overline{\latentcont}^0)$. Note that conditionally on $\underline{\latentcont}^0$ the components of $\underline{\latentdis}^0$ are assumed to be independent but $\underline{\latentcont}^0$ are sampled jointly under $p_{\theta}(\underline{\latentcont}^0|\overline{\latentcont}^0)$. As there are no continuous latent data in PixelCNN, $p_{\theta}(\underline{\latentdis}^0|\overline{\latentdis}^0)$ can be directly evaluated.
 
-\paragraph{FID. }
-We report Fr\'echet Inception Distance (FID) scores by sampling a latent discrete state $\latentdis \in \embedspace^N$ from the prior, and computing the associated image through the VQ-VAE decoder. In order to evaluate each prior independently from the encoder and decoder networks, these samples are compared to VQ-VAE reconstructions of the dataset images. 
+\paragraph{Fr\'echet Inception Distance. }
+We report Fr\'echet Inception Distance (FID) scores by sampling a latent discrete state $\latentdis \in \embedspace^N$ from the prior, and computing the associated image through the VQ-VAE decoder. In order to evaluate each prior independently from the encoder and decoder networks, these samples are compared to VQ-VAE reconstructions of the dataset images.
+
+\paragraph{Kullback-Leibler divergence. }
+In this experiment,  we draw $M=1000$ samples from test set and encode them using the trained VQ-VAE, and then draw as many samples from the pixelCNN prior, and our diffusion prior. We propose then to compute the empirical Kullback Leibler (KL) divergence between original and sampled distribution at each pixel. Figure~\ref{fig:klmap} highlights that PixelCNN performs poorly on the latest pixels (at the bottom) while our method remains consistent. This is explained by our denoising process in the continuous space which uses all pixels jointly while  PixelCNN is based on an autoregressive model. 
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.49\textwidth]{images/klmap_comparison.png}
+    \caption{KL Distance between the true empirical distribution and both prior distributions in the latent space. Darker squares indicates lower (better) values.}
+    \label{fig:klmap}
+    \vspace{-2mm}
+\end{figure}
+
+\begin{table}[htpb]
+    \centering
+    \begin{tabular}{c c}
+        \toprule
+         & KL \\
+        \toprule
+        Ours & {\bf 0.713}\\
+        PixelCNN & 0.809 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Averaged KL metric on the feature map.}
+    \label{tab:metrics}
+    \vspace{-4mm}
+\end{table}
 
 \paragraph{Computation times. }
-We evaluated the computation cost of sampling a batch of 32 images, on a GTX TITAN Xp GPU card. Note that the computational bottleneck of our model consists of the $T=1000$ sequential diffusion steps (rather than the encoder/decoder which is very fast). Therefore, a diffusion speeding technique such as the one described in \cite{song2021denoising} would be straightforward to apply and would likely provide a $\times 50$ speedup as mentioned in the paper. 
+We evaluated the computation cost of sampling a batch of 32 images, on a GTX TITAN Xp GPU card. Note that the computational bottleneck of our model consists of the $T=1000$ sequential diffusion steps (rather than the encoder/decoder which are very fast in comparison). Therefore, a diffusion speeding technique such as the one described in \cite{song2021denoising} would be straightforward to apply and would likely provide a $\times 50$ speedup as mentioned in the paper.
 
 \begin{table}
-    \caption{Results on \textit{mini}ImageNet. Metrics are computed on the validation dataset. The means are displayed along with the standard deviation in parenthesis.}
 \centering
-    \resizebox{.75\textwidth}{!}{\begin{tabular}{ |l||c|c|c| }
+    \caption{Results on \textit{mini}ImageNet. Metrics are computed on the validation dataset. The means are displayed along with the standard deviation in parenthesis.}
+    \resizebox{.65\textwidth}{!}{\begin{tabular}{ |l||c|c|c| }
         \hline
         & NLL & FID & s/sample \\
         \hline
@@ -372,14 +408,15 @@ We evaluated the computation cost of sampling a batch of 32 images, on a GTX TIT
 \end{table}
 
 \begin{table}
-    \caption{Results on CIFAR10. Metrics are computed on the validation dataset. The means are displayed along with the standard deviation in parenthesis.}
 \centering
-    \resizebox{.75\textwidth}{!}{\begin{tabular}{ |l||c|c|c| }
+    \caption{Results on CIFAR10. Metrics are computed on the validation dataset. The means are displayed along with the standard deviation in parenthesis.}
+    \resizebox{.65\textwidth}{!}{\begin{tabular}{ |l||c|c|c| }
         \hline
         & NLL & FID & s/sample \\
         \hline
         PixelCNN \cite{oord2017neural}     & 1.41 ($\pm 0.06)$ & 109 & 0.21 ($\pm 0.8ms$) \\
         Ours                               & 1.33 ($\pm 0.18$)  &  104 & 0.05s ($\pm 0.5ms$) \\
+        Ours  end-to-end               & 1.59 ($\pm 0.27$)\footnote{NLL for end-to-end takes into account the full model including the modified VQ-VAE, and therefore is not directly comparable to the two others.}  &  92 & 0.11s ($\pm 0.5ms$) \\
         \hline
     \end{tabular}}
     \label{tab:cifar}
@@ -389,20 +426,20 @@ We evaluated the computation cost of sampling a batch of 32 images, on a GTX TIT
 \subsection{Qualitative results}
 \paragraph{Sampling from the prior. }
 Samples from the PixelCNN prior are shown in Figure \ref{fig:pixel_samples}
-and samples from our prior in Figure \ref{fig:diffusion_samples}. Additional samples are given in Appendix~\ref{ap:additional_visuals}. Note that contrary to original VQ-VAE prior, the prior is not conditioned on a class, which makes the generation less specific and more difficult. However, the produced samples illustrate that our prior can generate a wide variety of images which show a large-scale spatial coherence in comparison with samples from PixelCNN. 
+and samples from our prior in Figure \ref{fig:diffusion_samples}. Additional samples are given in Appendix~\ref{ap:additional_visuals}. Note that contrary to original VQ-VAE prior, the prior is not conditioned on a class, which makes the generation less specific and more difficult. However, the produced samples illustrate that our prior can generate a wide variety of images which show a large-scale spatial coherence in comparison with samples from PixelCNN.
 
 
 \begin{figure}[h!]
 
 \begin{subfigure}{\linewidth}
     \centering
-    \includegraphics[width=.8\linewidth]{./samples2.pdf}
+    \includegraphics[width=.7\linewidth]{./samples2.pdf}
     \caption{Samples from our diffusion prior.}
     \label{fig:diffusion_samples}
 \end{subfigure}
 \begin{subfigure}{\linewidth}
     \centering
-    \includegraphics[width=.8\linewidth]{./pixel_samples.pdf}
+    \includegraphics[width=.7\linewidth]{./pixel_samples.pdf}
     \caption{Samples from the PixelCNN prior.}
     \label{fig:pixel_samples}
 \end{subfigure}
@@ -419,7 +456,7 @@ a specific conditioning order. Additional conditional sampling experiments are g
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{./cond_samples_center_2.pdf}
+    \includegraphics[width=.7\linewidth]{./cond_samples_center_2.pdf}
 
     \caption{Conditional sampling with centered mask: for each of the 3 different images, samples from our diffusion are on top and from PixelCNN on the bottom. For each row: the image on the left is the VQVAE masked reconstruction, the image on the right is the full VQ-VAE reconstruction. Images in-between are independent conditional samples from the models.}
     \label{fig:miniimagenet_prior_ours_conditional}
@@ -428,7 +465,7 @@ a specific conditioning order. Additional conditional sampling experiments are g
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{./cond_samples_topleft.pdf}
+    \includegraphics[width=.7\linewidth]{./cond_samples_topleft.pdf}
 
     \caption{Conditional sampling with top left mask: for each of the 3 different images, samples from our diffusion are on top and from PixelCNN on the bottom. For each row: the image on the left is the VQVAE masked reconstruction, the image on the right is the full VQ-VAE reconstruction. Images in-between are independent conditional samples from the models.}
     \label{fig:miniimagenet_prior_ours_conditional:topleft}
@@ -440,7 +477,7 @@ In addition to the conditional samples, Figure~\ref{fig:miniimagenet_prior_ours_
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{./chains2.pdf}
+    \includegraphics[width=.7\linewidth]{./chains2.pdf}
     \caption{Sampling denoising chain from $t=500$ up to $t=0$, shown at regular intervals, conditioned on the outer part of the picture. We show only the last $500$ steps of this process, as the first $500$ steps are not visually informative. The sampling procedure is described in Appendix~\ref{ap:inpainting}.}
     \label{fig:miniimagenet_prior_ours_chain}
 \end{figure}
@@ -448,7 +485,7 @@ In addition to the conditional samples, Figure~\ref{fig:miniimagenet_prior_ours_
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{./chains_unconditional.pdf}
+    \includegraphics[width=.7\linewidth]{./chains_unconditional.pdf}
     \caption{Sampling denoising chain from $t=500$ up to $t=0$, shown at regular intervals, unconditional. We show only the last $500$ steps of this process, as the first $500$ steps are not visually informative. The sampling procedure is described in Algorithm~\ref{alg:sample}}
     \label{fig:miniimagenet_prior_ours_chain_unconditional}
 \end{figure}
@@ -458,6 +495,9 @@ In addition to the conditional samples, Figure~\ref{fig:miniimagenet_prior_ours_
 \section{Conclusion}
 This work introduces a new mathematical framework for VQ-VAEs which includes a diffusion probabilistic model to learn the dependencies between the continuous latent  variables alongside the encoding and decoding part of the model. We showed conceptual improvements of our model over the VQ-VAE prior, as well as first numerical results on middle scale image generation. We believe that these first numerical experiments open up many research avenues: scaling to larger models, optimal scaling of the hyperparameters, including standard tricks from other diffusion methods, studying the influence of regulazation loss for end-to-end training, etc. We hope that this framework will serve as a sound and stable foundation to derive future generative models.
 
+
+\section*{Acknowledgements}
+The work of Max Cohen was supported by grants from R\'egion Ile-de-France. Charles Ollion and Guillaume Quispe benefited from the support of the Chair "New Gen RetAIl" led by l’X – \'Ecole Polytechnique and the Fondation de l’\'Ecole Polytechnique, sponsored by Carrefour.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -501,18 +541,17 @@ We consider the case in which we know a sub-part of the picture $\overline{X}$, 
 \item Sample $\overline{\latentcont}^{t-1}$ using the forward bridge noising process.
 \end{itemize}
 
-
 \section{Additional regularisation considerations}
 \label{ap:reg}
 
 We consider here details about the parameterisation of $p_{\theta}^{\latentdis}(\latentdis^t|\latentcont^t)$ and $q_{\varphi}^{\latentdis}(\latentdis^t|\latentcont^t)$ in order to compute $\mathcal{L}^{reg}_t(\theta,\varphi)$.
-Using the Gumbel-Softmax formulation provides an efficient and differentiable parameterisation. 
+Using the Gumbel-Softmax formulation provides an efficient and differentiable parameterisation.
 \begin{align*}
 p_{\theta,t}^{\latentdis}(\latentdis^t = \cdot|\latentcont^t) &= \mathrm{Softmax}\{(-\|\latentcont - \embed_k\|^2_2 + G_k )/\tau_t\}_{1\leqslant k \leqslant K}\,,\\
 q_{\varphi,t}(\latentdis^t = \cdot|\latentcont^t) &= \mathrm{Softmax}\{(-\|\latentcont - \embed_k\|^2_2 + \tilde G_k )/\tau\}_{1\leqslant k \leqslant K}\,,
 \end{align*}
  where $\{(G_k,\tilde G_k)\}_{1\leqslant k \leqslant K}$ are i.i.d. with distribution $\mathrm{Gumbel}(0,1)$, $\tau>0$, and $\{\tau_t\}_{0\leqslant t \leqslant T}$ are positive  time-dependent scaling parameters. Then, up to the additive normalizing terms,
-\begin{align*} 
+\begin{align*}
 \mathcal{L}^{reg}_t(\theta,\varphi) = \mathbb{E}_{q_{\varphi}}\left[\log \frac{p_{\theta,t}^{\latentdis}(\latentdis^{t}|\latentcont^{t})}{q_{\varphi,t}^{\latentdis}(\latentdis^{t}|\latentcont^{t})}\right] &= \left(-\frac{1}{\tau_t} + \frac{1}{\tau}\right)\|\latentcont^t - \widehat{\latentdis^t}\|_2^2   - \frac{\tilde G_k}{\tau} + \frac{G_k}{\tau_t}\,,
 \end{align*}
 where $\widehat{\latentdis^t}\sim q_{\varphi,t}^{\latentdis}(\latentdis^{t}|\latentcont^{t})$. Considering only the first term which depend on $\latentcont^t$ and produce non-zero gradients, we get:
@@ -534,16 +573,15 @@ We consider a neural network to model  $\varepsilon_\theta(\latentcont^t ,t)$. T
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=.9]{./network_toy.pdf}
+    \includegraphics[scale=2.0]{images/network_toy.png}
     \caption{Graphical representation of the neural network used for the toy dataset.}
     \label{ap:fig:toynetwork}
 \end{figure}
 
-For the parameterisation of the quantisation part, we choose $p_{\theta,t}^{\latentdis}(\latentdis^{t}=\embed_j|\latentcont^{t}) = \mathrm{Softmax}_{1\leq k \leq K}\{-\|\latentcont - \embed_k\|_2\}_j$, and the same parameterisation for $q_{\varphi,t}^{\latentdis}(\latentdis^{t}|\latentcont^{t})$. Therefore our loss simplifies to:
+For the parameterisation of the quantization part, we choose $p_{\theta,t}^{\latentdis}(\latentdis^{t}=\embed_j|\latentcont^{t}) = \mathrm{Softmax}_{1\leq k \leq K}\{-\|\latentcont - \embed_k\|_2\}_j$, and the same parameterisation for $q_{\varphi,t}^{\latentdis}(\latentdis^{t}|\latentcont^{t})$. Therefore our loss simplifies to:
 $$
 \mathcal{L}(\theta,\varphi) = \mathbb{E}_{q_{\varphi}}\left[\log p^x_{\theta}(x|\latentdis^{0})\right] +  \mathcal{L}_t(\theta,\varphi)\,,
 $$
-
 where $t$ is sampled uniformly in $\{0,\ldots,T\}$.
 
 \paragraph{Discrete samples during diffusion process}
@@ -576,7 +614,7 @@ In this toy example, the use of the third part of the loss $\sum_{t=0}^T \mathca
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.55]{./codebookstraining.pdf}
+    \includegraphics[scale=0.4]{images/codebookstraining.png}
     \caption{Left, initial random codebooks positions. Right, after training, position of codebook vectors. Note that the codebook indexes do not match the indexes of the Gaussians, the model learnt to make the associations between neighboring centroids in a different order.}
     \label{ap:codebooks}
 \end{figure}
@@ -587,26 +625,51 @@ In this toy example, the use of the third part of the loss $\sum_{t=0}^T \mathca
 We consider a case in which we want to reconstruct an $x$ while we only know one (or a few) dimensions, and sample the others. Consider that $x$ is generated using a sequence $q= (q_1,q_2,q_",q_4,q_5)$ where the last one if fixed $q_1 = 0, q_5 = 4$. Then, knowing $q_1, q_5$, we sample $q_2,q_3,q_4$, as shown in Figure \ref{fig:fixeddim}.
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.55]{./samplesFixed.pdf}
+    \includegraphics[scale=0.5]{./samplesFixed.pdf}
     \caption{Three independent sampling of $X$ using a trained diffusion bridge, with fixed $q_1 = 0, q_5 = 4$. The three corresponding sequences are $(0,7,6,5,4)$, $(0,1,2,3,4)$, $(0,7,6,5,4)$ all valid sequences.}
     \label{fig:fixeddim}
 \end{figure}
 
+\clearpage
+\newpage
  
 \section{Additional visuals}\label{ap:additional_visuals}
+
+\subsection{Cifar}
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\linewidth]{images/cifar_vqvae.png}
+    \caption{Reconstruction of the VQVAE model used in the following benchmarks.}
+    \label{fig:cifar_vqvae}
+\end{figure}
+
+\begin{figure}[!htb]
+    \centering
+    \begin{minipage}[b]{0.4\textwidth}
+    \includegraphics[width=1.\linewidth]{images/samples_pixel_cifar.png}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.4\textwidth}
+    \includegraphics[width=1.\linewidth]{images/ours/samples_cifar.png}
+    \end{minipage}
+        \caption{Samples from the PixelCNN prior (left) and from our diffusion prior (right) on CIFAR10.}
+
+    \label{fig:cifar_priors}
+\end{figure}
 
 
 \subsection{MiniImageNet}
 \begin{figure}[!htb]
     \centering
-    \includegraphics[width=0.9\linewidth]{./vqvae_miniImagenet_reconstruction.pdf}
+    \includegraphics[width=0.9\linewidth]{images/vqvae_miniImagenet_reconstruction.png}
     \caption{Reconstruction of the trained VQ-VAE on the \textit{mini}ImageNet dataset. Original images are encoded, discretised, and decoded.}
     \label{fig:miniimagenet_vqvae}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{./samples.pdf}
+    \includegraphics[width=1.\linewidth]{images/ours/samples.png}
     \caption{Samples from our model for the miniimagenet dataset}
     \label{fig:miniimagenet_prior_ours2}
 \end{figure}
@@ -614,9 +677,9 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{./cond_sampling2.pdf}
-    \includegraphics[width=.8\linewidth]{./cond_sampling_pixelcnn_train.pdf}
-    \includegraphics[width=.8\linewidth]{./cond_sampling_pixelcnn_train2.pdf}
+    \includegraphics[width=1.\linewidth]{images/ours/cond_sampling2.png}
+    \includegraphics[width=1.\linewidth]{images/cond_sampling_pixelcnn_train.png}
+    \includegraphics[width=1.\linewidth]{images/cond_sampling_pixelcnn_train2.png}
     \caption{Conditional sampling: Top: reconstructions from the vqvae of originals images, Middle: conditional sampling with the left side of the image as condition, for our model. Bottom 1 and 2: conditional sampling in the same context with the PixelCNN prior.}
     \label{fig:miniimagenet_prior_ours_conditional2}
 \end{figure}
@@ -624,12 +687,12 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{./media_images_conditional_sampling_chain_14_4.pdf}
-    \includegraphics[width=.8\linewidth]{./media_images_conditional_sampling_chain_14_0.pdf}
-    \includegraphics[width=.8\linewidth]{./media_images_conditional_sampling_chain_13_4.pdf}
-    \includegraphics[width=.8\linewidth]{./media_images_conditional_sampling_chain_14_1.pdf}
-    \includegraphics[width=.8\linewidth]{./media_images_conditional_sampling_chain_12_1.pdf}
-    \includegraphics[width=.8\linewidth]{./media_images_conditional_sampling_chain_10_4.pdf}
+    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_14_4.png}
+    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_14_0.png}
+    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_13_4.png}
+    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_14_1.png}
+    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_12_1.png}
+    \includegraphics[width=.8\linewidth]{images/ours/media_images_conditional_sampling_chain_10_4.png}
     \caption{Sampling denoising chain from up to $t=0$, shown at regular intervals, conditioned on the left part of the picture. The sampling procedure is described in Appendix~\ref{ap:inpainting}.}
     \label{fig:miniimagenet_prior_ours_chain2}
 \end{figure}
@@ -637,9 +700,9 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 \iffalse
 \begin{figure}
     \centering
-    \includegraphics[width=0.5\linewidth]{./cond_samples2.pdf}
-    \includegraphics[width=.8\linewidth]{./cond_sampling_pixelcnn_train.pdf}
-    \includegraphics[width=.8\linewidth]{./cond_sampling_pixelcnn_train2.pdf}
+    \includegraphics[width=0.5\linewidth]{images/ours/cond_samples2.png}
+    \includegraphics[width=.8\linewidth]{images/cond_sampling_pixelcnn_train.png}
+    \includegraphics[width=.8\linewidth]{images/cond_sampling_pixelcnn_train2.png}
     \caption{Conditional sampling: Top: reconstructions from the VQ-VAE of originals images, Middle: conditional sampling with the left side of the image as condition, for our model. Bottom 1 and 2: conditional sampling in the same context with the PixelCNN prior.}
     \label{fig:miniimagenet_prior_ours_conditional3}
 \end{figure}
@@ -648,45 +711,23 @@ We consider a case in which we want to reconstruct an $x$ while we only know one
 \begin{figure}
     \centering
     \begin{minipage}[b]{0.45\textwidth}
-        \includegraphics[width=1.\linewidth]{./cond_sampling_original.pdf}
+        \includegraphics[width=1.\linewidth]{images/cond_sampling_original.jpg}
     \end{minipage}
     \hfill
     \begin{minipage}[b]{0.45\textwidth}
 
-    \includegraphics[width=1.\linewidth]{./cond_sampling_pixelcnn.pdf}
+    \includegraphics[width=1.\linewidth]{images/cond_sampling_pixelcnn.jpg}
         \end{minipage}
     \caption{Conditional sampling with the PixelCNN prior. \textbf{Left}: original images, \textbf{Right}: conditional sampling with the left side of the image as condition. Each row represents a class of the validation set of the \textit{mini}ImageNet dataset.}
     \label{fig:miniimagenet_prior_pixelcnn_conditional}
 
 \end{figure}
 
+
 \clearpage
-
-\subsection{Cifar}
-
-\begin{figure}[!htb]
-    \centering
-    \includegraphics[width=\linewidth]{./cifar_vqvae.pdf}
-    \caption{Reconstruction of the VQVAE model used in the following benchmarks.}
-    \label{fig:cifar_vqvae}
-\end{figure}
-
-\begin{figure}[!htb]
-    \centering
-    \begin{minipage}[b]{0.4\textwidth}
-    \includegraphics[width=1.\linewidth]{./samples_pixel_cifar.pdf}
-    \end{minipage}
-    \hfill
-    \begin{minipage}[b]{0.4\textwidth}
-    \includegraphics[width=1.\linewidth]{./samples_cifar.pdf}
-    \end{minipage}
-        \caption{Samples from the PixelCNN prior (left) and from our diffusion prior (right) on CIFAR10.}
-        
-    \label{fig:cifar_priors}
-\end{figure}
-
-
 
 \bibliographystyle{apalike}
 \bibliography{vqvae}
+
+
 \end{document}
